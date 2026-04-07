@@ -411,13 +411,13 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
           onPress={onCancel}
           style={[
             styles.cancelBtn,
-            { borderColor: colors.border },
+            { backgroundColor: colors.surface },
           ]}
         >
           <Text
             style={[
               styles.cancelText,
-              { color: colors.mutedForeground },
+              { color: colors.background },
             ]}
           >
             Cancel
@@ -540,7 +540,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 9999,
-    borderWidth: 1,
     paddingVertical: 14,
     paddingHorizontal: 32,
   },
