@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { type DimensionValue, StyleSheet, Text, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
@@ -53,8 +53,8 @@ export function MonthOutlook({ debts }: Props) {
                 styles.barFill,
                 {
                   backgroundColor: colors.primary,
-                  width: `${(item.total / maxTotal) * 100}%`,
-                } as any,
+                  width: `${(item.total / maxTotal) * 100}%` as DimensionValue,
+                },
               ]}
             />
           </View>

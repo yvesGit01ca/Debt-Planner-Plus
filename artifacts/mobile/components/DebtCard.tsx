@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import {
   Alert,
+  type DimensionValue,
   Pressable,
   StyleSheet,
   Text,
@@ -110,8 +111,8 @@ export function DebtCard({ debt, onEdit }: Props) {
               styles.progressFill,
               {
                 backgroundColor: debt.color,
-                width: `${progress}%`,
-              } as any,
+                width: `${progress}%` as DimensionValue,
+              },
             ]}
           />
         </View>
