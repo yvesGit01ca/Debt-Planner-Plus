@@ -123,7 +123,7 @@ export function CurrencyPicker({ selected, onSelect, label }: Props) {
             styles.modal,
             {
               backgroundColor: colors.background,
-              paddingTop: Platform.OS === "ios" ? insets.top + 8 : 16,
+              paddingTop: Platform.OS === "web" ? 16 : 20,
             },
           ]}
         >
