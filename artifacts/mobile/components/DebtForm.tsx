@@ -71,7 +71,7 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
       remaining: parseFloat(remaining || principal) || 0,
       annualRate: type === "loan" ? parseFloat(annualRate) || 0 : 0,
       totalMonths: parseInt(totalMonths) || 1,
-      dueDay: Math.min(28, Math.max(1, parseInt(dueDay) || 1)),
+      dueDay: Math.min(31, Math.max(1, parseInt(dueDay) || 1)),
       startMonth,
       startYear: parseInt(startYear) || now.getFullYear(),
     });
