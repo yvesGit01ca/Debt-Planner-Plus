@@ -137,7 +137,7 @@ export function PayoffSimulator({ debt }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 14,
     marginTop: 12,
   },

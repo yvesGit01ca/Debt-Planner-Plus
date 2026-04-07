@@ -174,7 +174,7 @@ export function DebtCard({ debt, onEdit }: Props) {
               onPress={() => onEdit(debt)}
               style={[
                 styles.actionBtn,
-                { backgroundColor: colors.muted },
+                { backgroundColor: "rgba(201,201,205,0.12)" },
               ]}
             >
               <Feather
@@ -307,7 +307,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     borderRadius: 9999,
-    paddingVertical: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
   },
   actionText: {
     fontSize: 13,

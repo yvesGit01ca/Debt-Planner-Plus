@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 9999,
     borderWidth: 1,
-    paddingVertical: 10,
+    paddingVertical: 14,
   },
   typeBtnText: {
     fontSize: 13,
@@ -541,7 +541,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 9999,
     borderWidth: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
   },
   cancelText: {
     fontSize: 14,
@@ -554,7 +555,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     borderRadius: 9999,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
   },
   saveText: {
     fontSize: 14,

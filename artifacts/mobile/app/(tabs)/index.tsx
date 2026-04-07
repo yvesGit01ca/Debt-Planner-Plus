@@ -216,8 +216,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     borderRadius: 9999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
   },
   addBtnText: {
     fontSize: 13,

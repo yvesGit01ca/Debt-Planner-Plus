@@ -462,7 +462,8 @@ const styles = StyleSheet.create({
   saveIncomeBtn: {
     alignItems: "center",
     borderRadius: 9999,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
     marginTop: 4,
   },
   saveIncomeText: {
