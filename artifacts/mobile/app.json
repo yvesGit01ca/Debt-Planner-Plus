@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.yourcompany.ledger",
+      "bundleIdentifier": "app.replit.ledger",
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.yourcompany.ledger",
+      "package": "app.replit.ledger",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#191c1f"
@@ -48,9 +48,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "296a76ff-77c0-446e-b3a7-876f1de94879"
       }
     },
-    "owner": ""
+    "owner": "yves01cas-organization"
   }
 }

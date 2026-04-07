@@ -19,21 +19,13 @@
     },
     "production": {
       "autoIncrement": true,
-      "ios": {
-        "buildNumber": "1"
-      },
+      "ios": {},
       "android": {
         "buildType": "app-bundle"
       }
     }
   },
   "submit": {
-    "production": {
-      "ios": {
-        "appleId": "",
-        "ascAppId": "",
-        "appleTeamId": ""
-      }
-    }
+    "production": {}
   }
 }
