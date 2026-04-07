@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 12,
-    marginBottom: 10,
+    marginBottom: 8,
     fontFamily: "Inter_500Medium",
     letterSpacing: 0.24,
   },
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   dollar: {
     fontSize: 14,

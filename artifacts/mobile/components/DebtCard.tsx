@@ -193,10 +193,10 @@ export function DebtCard({ debt, onEdit }: Props) {
             </Pressable>
             <Pressable
               onPress={handleDelete}
-              style={[styles.actionBtn, { backgroundColor: "rgba(226,59,74,0.12)" }]}
+              style={[styles.actionBtn, { backgroundColor: colors.destructive }]}
             >
-              <Feather name="trash-2" size={14} color={colors.destructive} />
-              <Text style={[styles.actionText, { color: colors.destructive }]}>
+              <Feather name="trash-2" size={14} color={colors.destructiveForeground} />
+              <Text style={[styles.actionText, { color: colors.destructiveForeground }]}>
                 Delete
               </Text>
             </Pressable>
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 12,
+    marginTop: 16,
   },
   actionBtn: {
     flex: 1,

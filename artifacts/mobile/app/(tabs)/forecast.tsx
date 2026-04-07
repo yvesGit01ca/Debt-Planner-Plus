@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   },
   forecastRow: {
     borderRadius: 20,
-    padding: 14,
+    padding: 16,
     marginBottom: 8,
     borderWidth: 1,
   },
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   forecastMonth: {
     fontSize: 14,

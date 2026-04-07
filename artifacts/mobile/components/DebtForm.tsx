@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   estimate: {
     borderRadius: 20,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 24,
   },
   estimateLabel: {
     fontSize: 11,
