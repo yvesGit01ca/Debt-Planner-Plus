@@ -1,0 +1,437 @@
+import { useState, useMemo } from "react";
+
+const COLORS = [
+  "#FF6B6B", "#FFB347", "#4ECDC4", "#45B7D1", "#96CEB4",
+  "#DDA0DD", "#F0E68C", "#87CEEB", "#FF8C94", "#A8E6CF"
+];
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
+
+function formatCurrency(n) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(n);
+}
+
+function calcMonthlyPayment(principal, annualRate, months) {
+  if (annualRate === 0) return principal / months;
+  const r = annualRate / 100 / 12;
+  return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+}
+
+function calcPayoffWithExtra(principal, annualRate, baseMonthly, extraMonthly) {
+  if (principal <= 0) return { months: 0, totalPaid: 0, interestSaved: 0 };
+  const r = annualRate / 100 / 12;
+  const payment = baseMonthly + extraMonthly;
+  let balance = principal;
+  let months = 0;
+  let totalPaid = 0;
+  while (balance > 0.01 && months < 600) {
+    const interest = balance * r;
+    balance = balance + interest - payment;
+    totalPaid += payment;
+    months++;
+    if (balance < 0) { totalPaid += balance; balance = 0; }
+  }
+  return { months, totalPaid };
+}
+
+const initialDebts = [
+  { id: 1, name: "MacBook Pro", type: "bnpl", principal: 1200, remaining: 1200, monthlyPayment: 200, dueDay: 5, startMonth: 0, startYear: 2025, annualRate: 0, totalMonths: 6, color: COLORS[0] },
+  { id: 2, name: "Personal Loan", type: "loan", principal: 5000, remaining: 4200, monthlyPayment: 0, dueDay: 15, startMonth: 2, startYear: 2025, annualRate: 8.5, totalMonths: 36, color: COLORS[1] },
+  { id: 3, name: "Phone BNPL", type: "bnpl", principal: 600, remaining: 300, monthlyPayment: 100, dueDay: 22, startMonth: 3, startYear: 2025, annualRate: 0, totalMonths: 6, color: COLORS[3] },
+];
+
+function DebtForm({ onSave, onCancel, initial }) {
+  const [form, setForm] = useState(initial || {
+    name: "", type: "loan", principal: "", remaining: "", annualRate: "",
+    totalMonths: "", dueDay: "", startMonth: new Date().getMonth(), startYear: new Date().getFullYear(),
+  });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const monthlyPayment = useMemo(() => {
+    const p = parseFloat(form.remaining || form.principal) || 0;
+    const r = parseFloat(form.annualRate) || 0;
+    const m = parseInt(form.totalMonths) || 1;
+    if (form.type === "bnpl") return p / m;
+    return calcMonthlyPayment(p, r, m);
+  }, [form]);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div style={{ gridColumn: "1/-1" }}>
+          <label style={labelStyle}>Debt Name</label>
+          <input style={inputStyle} value={form.name} onChange={e => set("name", e.target.value)} placeholder="e.g. iPhone Installment" />
+        </div>
+        <div>
+          <label style={labelStyle}>Type</label>
+          <select style={inputStyle} value={form.type} onChange={e => set("type", e.target.value)}>
+            <option value="loan">Loan (with interest)</option>
+            <option value="bnpl">Buy Now Pay Later</option>
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Due Day of Month</label>
+          <input style={inputStyle} type="number" min="1" max="28" value={form.dueDay} onChange={e => set("dueDay", e.target.value)} placeholder="e.g. 15" />
+        </div>
+        <div>
+          <label style={labelStyle}>Total Principal ($)</label>
+          <input style={inputStyle} type="number" value={form.principal} onChange={e => set("principal", e.target.value)} placeholder="5000" />
+        </div>
+        <div>
+          <label style={labelStyle}>Remaining Balance ($)</label>
+          <input style={inputStyle} type="number" value={form.remaining} onChange={e => set("remaining", e.target.value)} placeholder="5000" />
+        </div>
+        {form.type === "loan" && (
+          <div>
+            <label style={labelStyle}>Annual Rate (%)</label>
+            <input style={inputStyle} type="number" step="0.1" value={form.annualRate} onChange={e => set("annualRate", e.target.value)} placeholder="8.5" />
+          </div>
+        )}
+        <div>
+          <label style={labelStyle}>Months Remaining</label>
+          <input style={inputStyle} type="number" value={form.totalMonths} onChange={e => set("totalMonths", e.target.value)} placeholder="36" />
+        </div>
+        <div>
+          <label style={labelStyle}>Start Month</label>
+          <select style={inputStyle} value={form.startMonth} onChange={e => set("startMonth", parseInt(e.target.value))}>
+            {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Start Year</label>
+          <input style={inputStyle} type="number" value={form.startYear} onChange={e => set("startYear", e.target.value)} placeholder="2025" />
+        </div>
+      </div>
+      {monthlyPayment > 0 && (
+        <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#aaa" }}>
+          Estimated monthly payment: <span style={{ color: "#fff", fontWeight: 700 }}>{formatCurrency(monthlyPayment)}</span>
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+        <button onClick={onCancel} style={{ ...btnStyle, background: "transparent", border: "1px solid #333", color: "#aaa" }}>Cancel</button>
+        <button onClick={() => onSave({ ...form, monthlyPayment, color: initial?.color || COLORS[Math.floor(Math.random() * COLORS.length)], id: initial?.id || Date.now(), principal: parseFloat(form.principal), remaining: parseFloat(form.remaining), annualRate: parseFloat(form.annualRate) || 0, totalMonths: parseInt(form.totalMonths), dueDay: parseInt(form.dueDay), startMonth: parseInt(form.startMonth), startYear: parseInt(form.startYear) })} style={btnStyle}>Save Debt</button>
+      </div>
+    </div>
+  );
+}
+
+const labelStyle = { display: "block", fontSize: 11, color: "#888", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" };
+const inputStyle = { width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#fff", fontSize: 14, boxSizing: "border-box", outline: "none" };
+const btnStyle = { background: "#e8c547", color: "#000", border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 700, fontSize: 13, cursor: "pointer" };
+
+function CalendarView({ debts, year, month }) {
+  const days = DAYS_IN_MONTH[month];
+  const firstDay = new Date(year, month, 1).getDay();
+  const cells = Array(firstDay).fill(null).concat(Array.from({ length: days }, (_, i) => i + 1));
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const debtsOnDay = (day) => debts.filter(d => {
+    if (!day) return false;
+    const start = new Date(d.startYear, d.startMonth, 1);
+    const end = new Date(d.startYear, d.startMonth + d.totalMonths, 1);
+    const current = new Date(year, month, 1);
+    return d.dueDay === day && current >= start && current < end;
+  });
+
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2, marginBottom: 4 }}>
+        {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
+          <div key={d} style={{ textAlign: "center", fontSize: 10, color: "#555", padding: "4px 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>{d}</div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2 }}>
+        {cells.map((day, i) => {
+          const hits = debtsOnDay(day);
+          const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+          return (
+            <div key={i} style={{
+              minHeight: 52, borderRadius: 6, padding: "4px 5px",
+              background: day ? (isToday ? "rgba(232,197,71,0.12)" : "#111") : "transparent",
+              border: isToday ? "1px solid rgba(232,197,71,0.4)" : "1px solid transparent",
+              position: "relative"
+            }}>
+              {day && <div style={{ fontSize: 11, color: isToday ? "#e8c547" : "#555", marginBottom: 3 }}>{day}</div>}
+              {hits.map(d => (
+                <div key={d.id} title={`${d.name}: ${formatCurrency(d.monthlyPayment)}`} style={{
+                  background: d.color, borderRadius: 3, padding: "2px 4px",
+                  fontSize: 9, fontWeight: 700, color: "#000", marginBottom: 2,
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
+                }}>{d.name}</div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PayoffSimulator({ debt }) {
+  const [extra, setExtra] = useState(0);
+  const base = calcPayoffWithExtra(debt.remaining, debt.annualRate, debt.monthlyPayment, 0);
+  const accelerated = calcPayoffWithExtra(debt.remaining, debt.annualRate, debt.monthlyPayment, extra);
+  const monthsSaved = base.months - accelerated.months;
+  const moneySaved = base.totalPaid - accelerated.totalPaid;
+
+  return (
+    <div style={{ background: "#111", borderRadius: 12, padding: 16, marginTop: 10 }}>
+      <div style={{ fontSize: 12, color: "#888", marginBottom: 10 }}>Extra monthly contribution</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <span style={{ color: "#555", fontSize: 14 }}>$</span>
+        <input type="range" min="0" max={debt.monthlyPayment * 3} step="10" value={extra}
+          onChange={e => setExtra(Number(e.target.value))}
+          style={{ flex: 1, accentColor: debt.color }} />
+        <input type="number" value={extra} onChange={e => setExtra(Number(e.target.value))}
+          style={{ ...inputStyle, width: 80, textAlign: "right" }} />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        {[
+          { label: "Payoff in", val: `${accelerated.months} mo`, sub: `${Math.floor(accelerated.months/12)}y ${accelerated.months%12}m` },
+          { label: "Total paid", val: formatCurrency(accelerated.totalPaid) },
+          { label: "Months saved", val: monthsSaved > 0 ? `−${monthsSaved} mo` : "—", highlight: monthsSaved > 0 },
+          { label: "Money saved", val: moneySaved > 0.5 ? formatCurrency(moneySaved) : "—", highlight: moneySaved > 0.5 },
+        ].map(({ label, val, sub, highlight }) => (
+          <div key={label} style={{ background: "#1a1a1a", borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ fontSize: 10, color: "#666", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: highlight ? "#4ECDC4" : "#fff" }}>{val}</div>
+            {sub && <div style={{ fontSize: 10, color: "#666" }}>{sub}</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function DebtApp() {
+  const now = new Date();
+  const [debts, setDebts] = useState(initialDebts);
+  const [view, setView] = useState("dashboard"); // dashboard | calendar | add | detail
+  const [calMonth, setCalMonth] = useState(now.getMonth());
+  const [calYear, setCalYear] = useState(now.getFullYear());
+  const [editingDebt, setEditingDebt] = useState(null);
+  const [detailDebt, setDetailDebt] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  const totalMonthly = useMemo(() => debts.reduce((s, d) => {
+    const start = new Date(d.startYear, d.startMonth, 1);
+    const end = new Date(d.startYear, d.startMonth + d.totalMonths, 1);
+    const cur = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (cur >= start && cur < end) return s + d.monthlyPayment;
+    return s;
+  }, 0), [debts]);
+
+  const totalRemaining = useMemo(() => debts.reduce((s, d) => s + d.remaining, 0), [debts]);
+
+  const activeDebts = debts.filter(d => {
+    const start = new Date(d.startYear, d.startMonth, 1);
+    const end = new Date(d.startYear, d.startMonth + d.totalMonths, 1);
+    const cur = new Date(now.getFullYear(), now.getMonth(), 1);
+    return cur >= start && cur < end;
+  }).sort((a, b) => a.dueDay - b.dueDay);
+
+  const saveDebt = (debt) => {
+    setDebts(prev => {
+      const idx = prev.findIndex(d => d.id === debt.id);
+      if (idx >= 0) { const next = [...prev]; next[idx] = debt; return next; }
+      return [...prev, debt];
+    });
+    setShowForm(false); setEditingDebt(null);
+  };
+
+  const deleteDebt = (id) => { setDebts(prev => prev.filter(d => d.id !== id)); setDetailDebt(null); };
+
+  const navMonth = (dir) => {
+    let m = calMonth + dir, y = calYear;
+    if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; }
+    setCalMonth(m); setCalYear(y);
+  };
+
+  const TAB = ({ id, label }) => (
+    <button onClick={() => setView(id)} style={{
+      background: view === id ? "#e8c547" : "transparent",
+      color: view === id ? "#000" : "#666",
+      border: "none", borderRadius: 8, padding: "8px 18px",
+      fontWeight: 700, fontSize: 12, cursor: "pointer",
+      textTransform: "uppercase", letterSpacing: "0.06em"
+    }}>{label}</button>
+  );
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: "#0a0a0a", color: "#fff",
+      fontFamily: "'Courier New', monospace",
+      padding: "0 0 80px"
+    }}>
+      {/* Header */}
+      <div style={{ padding: "28px 20px 0", borderBottom: "1px solid #141414" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
+          <div>
+            <div style={{ fontSize: 10, color: "#555", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 4 }}>Debt Tracker</div>
+            <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.02em", color: "#fff" }}>LEDGER<span style={{ color: "#e8c547" }}>.</span></div>
+          </div>
+          <button onClick={() => { setEditingDebt(null); setShowForm(true); setView("dashboard"); }} style={{ ...btnStyle, display: "flex", alignItems: "center", gap: 6, padding: "10px 16px" }}>
+            <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> Add Debt
+          </button>
+        </div>
+        <div style={{ display: "flex", gap: 4, paddingBottom: 1 }}>
+          <TAB id="dashboard" label="Overview" />
+          <TAB id="calendar" label="Calendar" />
+        </div>
+      </div>
+
+      <div style={{ padding: "20px 20px 0" }}>
+        {/* Summary Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+          {[
+            { label: "Due This Month", val: formatCurrency(totalMonthly), accent: "#e8c547" },
+            { label: "Total Remaining", val: formatCurrency(totalRemaining), accent: "#FF6B6B" },
+            { label: "Active Debts", val: activeDebts.length, accent: "#4ECDC4" },
+          ].map(({ label, val, accent }) => (
+            <div key={label} style={{ background: "#111", borderRadius: 12, padding: "14px 12px" }}>
+              <div style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>{label}</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: accent }}>{val}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Add Form */}
+        {showForm && (
+          <div style={{ background: "#111", borderRadius: 14, padding: 18, marginBottom: 20, border: "1px solid #1e1e1e" }}>
+            <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.06em", color: "#e8c547" }}>
+              {editingDebt ? "Edit Debt" : "New Debt"}
+            </div>
+            <DebtForm initial={editingDebt} onSave={saveDebt} onCancel={() => { setShowForm(false); setEditingDebt(null); }} />
+          </div>
+        )}
+
+        {/* Dashboard View */}
+        {view === "dashboard" && (
+          <div>
+            {/* Timeline for current month */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12 }}>
+                {MONTHS[now.getMonth()]} {now.getFullYear()} — Payment Schedule
+              </div>
+              {activeDebts.length === 0 && (
+                <div style={{ color: "#333", fontSize: 13, padding: "20px 0", textAlign: "center" }}>No active debts this month</div>
+              )}
+              {activeDebts.map(d => {
+                const monthsLeft = d.totalMonths - Math.floor((now.getFullYear() * 12 + now.getMonth()) - (d.startYear * 12 + d.startMonth));
+                const progress = Math.min(100, ((d.totalMonths - monthsLeft) / d.totalMonths) * 100);
+                return (
+                  <div key={d.id} onClick={() => { setDetailDebt(detailDebt?.id === d.id ? null : d); }}
+                    style={{ background: "#111", borderRadius: 12, padding: 14, marginBottom: 10, cursor: "pointer", border: `1px solid ${detailDebt?.id === d.id ? d.color + "55" : "#1a1a1a"}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: d.color, flexShrink: 0 }} />
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: 14 }}>{d.name}</div>
+                          <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>
+                            {d.type === "loan" ? `${d.annualRate}% APR · ` : "BNPL · "}{monthsLeft} mo left
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontWeight: 900, fontSize: 16, color: d.color }}>{formatCurrency(d.monthlyPayment)}</div>
+                        <div style={{ fontSize: 10, color: "#555" }}>Due day {d.dueDay}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ flex: 1, height: 4, background: "#1e1e1e", borderRadius: 2 }}>
+                        <div style={{ width: `${progress}%`, height: "100%", background: d.color, borderRadius: 2, transition: "width 0.4s" }} />
+                      </div>
+                      <div style={{ fontSize: 10, color: "#444" }}>{Math.round(progress)}%</div>
+                    </div>
+
+                    {detailDebt?.id === d.id && (
+                      <div onClick={e => e.stopPropagation()}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 14 }}>
+                          {[
+                            { label: "Remaining", val: formatCurrency(d.remaining) },
+                            { label: "Total paid", val: formatCurrency((d.principal - d.remaining)) },
+                            { label: "Monthly", val: formatCurrency(d.monthlyPayment) },
+                          ].map(({ label, val }) => (
+                            <div key={label} style={{ background: "#1a1a1a", borderRadius: 8, padding: "8px 10px" }}>
+                              <div style={{ fontSize: 9, color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>{label}</div>
+                              <div style={{ fontSize: 13, fontWeight: 700 }}>{val}</div>
+                            </div>
+                          ))}
+                        </div>
+                        {d.type === "loan" && <PayoffSimulator debt={d} />}
+                        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                          <button onClick={() => { setEditingDebt(d); setShowForm(true); }} style={{ ...btnStyle, background: "#1e1e1e", color: "#fff", flex: 1, fontSize: 12 }}>Edit</button>
+                          <button onClick={() => deleteDebt(d.id)} style={{ ...btnStyle, background: "#2a1111", color: "#FF6B6B", flex: 1, fontSize: 12 }}>Delete</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Upcoming months summary */}
+            <div>
+              <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12 }}>6-Month Outlook</div>
+              {Array.from({ length: 6 }, (_, i) => {
+                let m = now.getMonth() + i, y = now.getFullYear();
+                if (m > 11) { m -= 12; y++; }
+                const total = debts.reduce((s, d) => {
+                  const start = new Date(d.startYear, d.startMonth, 1);
+                  const end = new Date(d.startYear, d.startMonth + d.totalMonths, 1);
+                  const cur = new Date(y, m, 1);
+                  return (cur >= start && cur < end) ? s + d.monthlyPayment : s;
+                }, 0);
+                const maxPossible = debts.reduce((s, d) => s + d.monthlyPayment, 0) || 1;
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    <div style={{ width: 38, fontSize: 11, color: "#555", flexShrink: 0 }}>{MONTHS[m]}</div>
+                    <div style={{ flex: 1, height: 6, background: "#111", borderRadius: 3 }}>
+                      <div style={{ width: `${(total / maxPossible) * 100}%`, height: "100%", background: "#e8c547", borderRadius: 3 }} />
+                    </div>
+                    <div style={{ width: 72, fontSize: 12, fontWeight: 700, color: total > 0 ? "#fff" : "#333", textAlign: "right" }}>{total > 0 ? formatCurrency(total) : "—"}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Calendar View */}
+        {view === "calendar" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <button onClick={() => navMonth(-1)} style={{ background: "#111", border: "none", color: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 16 }}>‹</button>
+              <div style={{ fontWeight: 800, fontSize: 15 }}>{MONTHS[calMonth]} {calYear}</div>
+              <button onClick={() => navMonth(1)} style={{ background: "#111", border: "none", color: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 16 }}>›</button>
+            </div>
+            <CalendarView debts={debts} year={calYear} month={calMonth} />
+            {/* Legend */}
+            <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {debts.map(d => (
+                <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 6, background: "#111", borderRadius: 6, padding: "4px 10px" }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: d.color }} />
+                  <span style={{ fontSize: 11, color: "#aaa" }}>{d.name}</span>
+                  <span style={{ fontSize: 11, color: d.color, fontWeight: 700 }}>{formatCurrency(d.monthlyPayment)}</span>
+                </div>
+              ))}
+            </div>
+            {/* Monthly total on calendar */}
+            <div style={{ marginTop: 14, background: "#111", borderRadius: 12, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em" }}>Total due this month</span>
+              <span style={{ fontSize: 18, fontWeight: 900, color: "#e8c547" }}>
+                {formatCurrency(debts.reduce((s, d) => {
+                  const start = new Date(d.startYear, d.startMonth, 1);
+                  const end = new Date(d.startYear, d.startMonth + d.totalMonths, 1);
+                  const cur = new Date(calYear, calMonth, 1);
+                  return (cur >= start && cur < end) ? s + d.monthlyPayment : s;
+                }, 0))}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
