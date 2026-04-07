@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Platform,
   StyleSheet,
@@ -23,16 +23,40 @@ function validateEditId(raw: string | string[] | undefined): string | null {
   return value;
 }
 
+function safeInt(raw: string | string[] | undefined, min: number, max: number): number | undefined {
+  if (!raw) return undefined;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const n = parseInt(value, 10);
+  if (isNaN(n) || n < min || n > max) return undefined;
+  return n;
+}
+
 export default function AddDebtScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { debts, addDebt, updateDebt } = useDebts();
-  const params = useLocalSearchParams<{ editId?: string }>();
+  const params = useLocalSearchParams<{
+    editId?: string;
+    prefillDay?: string;
+    prefillMonth?: string;
+    prefillYear?: string;
+  }>();
 
   const safeEditId = validateEditId(params.editId);
   const editingDebt = safeEditId
     ? debts.find((d) => d.id === safeEditId) ?? null
     : null;
+
+  const prefill = useMemo(() => {
+    if (editingDebt) return undefined;
+    const dueDay = safeInt(params.prefillDay, 1, 31);
+    const startMonth = safeInt(params.prefillMonth, 0, 11);
+    const startYear = safeInt(params.prefillYear, 2000, 2100);
+    if (dueDay === undefined && startMonth === undefined && startYear === undefined) {
+      return undefined;
+    }
+    return { dueDay, startMonth, startYear };
+  }, [params.prefillDay, params.prefillMonth, params.prefillYear, editingDebt]);
 
   const handleSave = (
     data: Omit<Debt, "id" | "color" | "monthlyPayment"> &
@@ -72,6 +96,7 @@ export default function AddDebtScreen() {
         </Text>
         <DebtForm
           initial={editingDebt}
+          prefill={prefill}
           onSave={handleSave}
           onCancel={() => router.back()}
         />

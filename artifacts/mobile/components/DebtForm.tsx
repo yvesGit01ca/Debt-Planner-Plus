@@ -19,8 +19,15 @@ import type { Debt } from "@/types/debt";
 import { MONTHS } from "@/types/debt";
 import { calcMonthlyPayment, formatCurrency } from "@/utils/calculations";
 
+interface Prefill {
+  dueDay?: number;
+  startMonth?: number;
+  startYear?: number;
+}
+
 interface Props {
   initial?: Debt | null;
+  prefill?: Prefill;
   onSave: (data: Omit<Debt, "id" | "color" | "monthlyPayment"> & Partial<Pick<Debt, "id" | "color">>) => void;
   onCancel: () => void;
 }
@@ -143,7 +150,7 @@ function validateForm(fields: {
   return errors;
 }
 
-export function DebtForm({ initial, onSave, onCancel }: Props) {
+export function DebtForm({ initial, prefill, onSave, onCancel }: Props) {
   const colors = useColors();
   const { profile } = useDebts();
   const now = new Date();
@@ -164,13 +171,13 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
     initial ? String(initial.totalMonths) : "",
   );
   const [dueDay, setDueDay] = useState(
-    initial ? String(initial.dueDay) : "",
+    initial ? String(initial.dueDay) : prefill?.dueDay !== undefined ? String(prefill.dueDay) : "",
   );
   const [startMonth, setStartMonth] = useState(
-    initial?.startMonth ?? now.getMonth(),
+    initial?.startMonth ?? prefill?.startMonth ?? now.getMonth(),
   );
   const [startYear, setStartYear] = useState(
-    initial ? String(initial.startYear) : String(now.getFullYear()),
+    initial ? String(initial.startYear) : prefill?.startYear !== undefined ? String(prefill.startYear) : String(now.getFullYear()),
   );
   const [currency, setCurrency] = useState(
     initial?.currency ?? profile.defaultCurrency ?? DEFAULT_CURRENCY,

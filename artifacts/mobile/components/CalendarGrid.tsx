@@ -1,5 +1,6 @@
+import * as Haptics from "expo-haptics";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
@@ -9,11 +10,13 @@ interface Props {
   debts: Debt[];
   year: number;
   month: number;
+  selectedDay?: number | null;
+  onSelectDay?: (day: number) => void;
 }
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-export function CalendarGrid({ debts, year, month }: Props) {
+export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay }: Props) {
   const colors = useColors();
   const days = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
@@ -36,6 +39,11 @@ export function CalendarGrid({ debts, year, month }: Props) {
     );
   };
 
+  const handleDayPress = (day: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onSelectDay?.(day);
+  };
+
   return (
     <View>
       <View style={styles.weekdayRow}>
@@ -56,50 +64,78 @@ export function CalendarGrid({ debts, year, month }: Props) {
         {cells.map((day, i) => {
           const hits = debtsOnDay(day);
           const isToday = isCurrentMonth && day === now.getDate();
-          return (
-            <View
-              key={i}
-              style={[
-                styles.cell,
-                {
-                  backgroundColor: day
-                    ? isToday
-                      ? "rgba(73,79,223,0.12)"
-                      : colors.card
-                    : "transparent",
-                  borderColor: isToday
-                    ? "rgba(73,79,223,0.4)"
-                    : "transparent",
-                },
-              ]}
-            >
+          const isSelected = day !== null && day === selectedDay;
+
+          const bgColor = day
+            ? isSelected
+              ? "rgba(73,79,223,0.18)"
+              : isToday
+                ? "rgba(73,79,223,0.12)"
+                : colors.card
+            : "transparent";
+
+          const borderCol = isSelected
+            ? colors.primary
+            : isToday
+              ? "rgba(73,79,223,0.4)"
+              : "transparent";
+
+          const dayColor = isSelected || isToday
+            ? colors.primary
+            : colors.mutedForeground;
+
+          const cellContent = (
+            <>
               {day !== null && (
                 <Text
                   style={[
                     styles.dayText,
                     {
-                      color: isToday
-                        ? colors.primary
-                        : colors.mutedForeground,
+                      color: dayColor,
+                      fontFamily: isSelected ? "Inter_700Bold" : "Inter_500Medium",
                     },
                   ]}
                 >
                   {day}
                 </Text>
               )}
-              {hits.map((d) => (
-                <View
-                  key={d.id}
-                  style={[
-                    styles.debtChip,
-                    { backgroundColor: d.color },
-                  ]}
-                >
-                  <Text style={styles.chipText} numberOfLines={1}>
-                    {d.name}
-                  </Text>
+              {hits.length > 0 && (
+                <View style={styles.dotRow}>
+                  {hits.map((d) => (
+                    <View
+                      key={d.id}
+                      style={[styles.debtDot, { backgroundColor: d.color }]}
+                    />
+                  ))}
                 </View>
-              ))}
+              )}
+            </>
+          );
+
+          if (day !== null) {
+            return (
+              <Pressable
+                key={i}
+                onPress={() => handleDayPress(day)}
+                style={[
+                  styles.cell,
+                  { backgroundColor: bgColor, borderColor: borderCol },
+                ]}
+              >
+                {cellContent}
+              </Pressable>
+            );
+          }
+
+          return (
+            <View
+              key={i}
+              style={[
+                styles.cell,
+                { backgroundColor: "transparent", borderColor: "transparent" },
+              ]}
+            >
+              {cellContent}
             </View>
           );
         })}
@@ -200,23 +236,24 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: 8,
     padding: 4,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    alignItems: "center",
   },
   dayText: {
     fontSize: 11,
     marginBottom: 2,
     fontFamily: "Inter_500Medium",
   },
-  debtChip: {
-    borderRadius: 4,
-    paddingHorizontal: 3,
-    paddingVertical: 1,
-    marginBottom: 1,
+  dotRow: {
+    flexDirection: "row",
+    gap: 2,
+    marginTop: 2,
+    justifyContent: "center",
   },
-  chipText: {
-    fontSize: 7,
-    fontFamily: "Inter_700Bold",
-    color: "#fff",
+  debtDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   legend: {
     flexDirection: "row",
