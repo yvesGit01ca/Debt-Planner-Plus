@@ -8,9 +8,10 @@ import { formatCurrency, isDebtActiveInMonth } from "@/utils/calculations";
 
 interface Props {
   debts: Debt[];
+  defaultCurrency?: string;
 }
 
-export function MonthOutlook({ debts }: Props) {
+export function MonthOutlook({ debts, defaultCurrency = "USD" }: Props) {
   const colors = useColors();
   const now = new Date();
 
@@ -68,7 +69,7 @@ export function MonthOutlook({ debts }: Props) {
               },
             ]}
           >
-            {item.total > 0 ? formatCurrency(item.total) : "--"}
+            {item.total > 0 ? formatCurrency(item.total, defaultCurrency) : "--"}
           </Text>
         </View>
       ))}

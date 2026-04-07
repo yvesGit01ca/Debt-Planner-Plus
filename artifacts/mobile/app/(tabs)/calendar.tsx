@@ -19,7 +19,7 @@ import { MONTHS } from "@/types/debt";
 export default function CalendarScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { debts } = useDebts();
+  const { debts, profile } = useDebts();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
@@ -94,7 +94,7 @@ export default function CalendarScreen() {
           </Pressable>
         </View>
 
-        <CalendarGrid debts={debts} year={year} month={month} />
+        <CalendarGrid debts={debts} year={year} month={month} defaultCurrency={profile.defaultCurrency} />
       </ScrollView>
     </View>
   );

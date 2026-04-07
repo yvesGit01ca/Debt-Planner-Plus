@@ -1,8 +1,12 @@
-export function formatCurrency(n: number): string {
-  return new Intl.NumberFormat("en-US", {
+import { getCurrencyInfo } from "@/constants/currencies";
+
+export function formatCurrency(n: number, currencyCode: string = "USD"): string {
+  const info = getCurrencyInfo(currencyCode);
+  return new Intl.NumberFormat(info.locale, {
     style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
+    currency: info.code,
+    maximumFractionDigits: info.decimals,
+    minimumFractionDigits: info.decimals,
   }).format(n);
 }
 

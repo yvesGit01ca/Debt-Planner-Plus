@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import Slider from "@react-native-community/slider";
 
+import { getCurrencySymbol } from "@/constants/currencies";
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
 import { calcPayoffWithExtra, formatCurrency } from "@/utils/calculations";
@@ -14,6 +15,8 @@ export function PayoffSimulator({ debt }: Props) {
   const colors = useColors();
   const [extra, setExtra] = useState(0);
   const maxExtra = Math.max(debt.monthlyPayment * 3, 100);
+  const cc = debt.currency || "USD";
+  const sym = getCurrencySymbol(cc);
 
   const base = calcPayoffWithExtra(
     debt.remaining,
@@ -39,7 +42,7 @@ export function PayoffSimulator({ debt }: Props) {
     },
     {
       label: "Total paid",
-      value: formatCurrency(accelerated.totalPaid),
+      value: formatCurrency(accelerated.totalPaid, cc),
       highlight: false,
     },
     {
@@ -49,7 +52,7 @@ export function PayoffSimulator({ debt }: Props) {
     },
     {
       label: "Money saved",
-      value: moneySaved > 0.5 ? formatCurrency(moneySaved) : "--",
+      value: moneySaved > 0.5 ? formatCurrency(moneySaved, cc) : "--",
       highlight: moneySaved > 0.5,
     },
   ];
@@ -63,7 +66,7 @@ export function PayoffSimulator({ debt }: Props) {
       </Text>
       <View style={styles.sliderRow}>
         <Text style={[styles.dollar, { color: colors.mutedForeground }]}>
-          $
+          {sym}
         </Text>
         <View style={styles.sliderWrap}>
           <Slider

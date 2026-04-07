@@ -25,6 +25,7 @@ export function DebtCard({ debt, onEdit }: Props) {
   const colors = useColors();
   const { deleteDebt } = useDebts();
   const [expanded, setExpanded] = useState(false);
+  const cc = debt.currency || "USD";
 
   const monthsLeft = getMonthsLeft(
     debt.startMonth,
@@ -92,7 +93,7 @@ export function DebtCard({ debt, onEdit }: Props) {
         </View>
         <View style={styles.headerRight}>
           <Text style={[styles.amount, { color: debt.color }]}>
-            {formatCurrency(debt.monthlyPayment)}
+            {formatCurrency(debt.monthlyPayment, cc)}
           </Text>
           <Text
             style={[styles.dueDay, { color: colors.mutedForeground }]}
@@ -129,15 +130,15 @@ export function DebtCard({ debt, onEdit }: Props) {
             {[
               {
                 label: "Remaining",
-                val: formatCurrency(debt.remaining),
+                val: formatCurrency(debt.remaining, cc),
               },
               {
                 label: "Total Paid",
-                val: formatCurrency(debt.principal - debt.remaining),
+                val: formatCurrency(debt.principal - debt.remaining, cc),
               },
               {
                 label: "Monthly",
-                val: formatCurrency(debt.monthlyPayment),
+                val: formatCurrency(debt.monthlyPayment, cc),
               },
             ].map((item) => (
               <View

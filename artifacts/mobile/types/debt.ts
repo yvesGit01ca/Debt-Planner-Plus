@@ -11,11 +11,13 @@ export interface Debt {
   annualRate: number;
   totalMonths: number;
   color: string;
+  currency: string;
 }
 
 export interface FinancialProfile {
   monthlySalary: number;
   additionalRevenue: number;
+  defaultCurrency: string;
 }
 
 export const DEBT_COLORS = [

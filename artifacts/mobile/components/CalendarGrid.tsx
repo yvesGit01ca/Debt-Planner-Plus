@@ -9,11 +9,12 @@ interface Props {
   debts: Debt[];
   year: number;
   month: number;
+  defaultCurrency?: string;
 }
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-export function CalendarGrid({ debts, year, month }: Props) {
+export function CalendarGrid({ debts, year, month, defaultCurrency = "USD" }: Props) {
   const colors = useColors();
   const days = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
@@ -134,7 +135,7 @@ export function CalendarGrid({ debts, year, month }: Props) {
                 { color: d.color },
               ]}
             >
-              {formatCurrency(d.monthlyPayment)}
+              {formatCurrency(d.monthlyPayment, d.currency || defaultCurrency)}
             </Text>
           </View>
         ))}
@@ -167,6 +168,7 @@ export function CalendarGrid({ debts, year, month }: Props) {
               }
               return s;
             }, 0),
+            defaultCurrency,
           )}
         </Text>
       </View>

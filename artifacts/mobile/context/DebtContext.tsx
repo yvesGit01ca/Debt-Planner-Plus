@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { Platform } from "react-native";
 
+import { DEFAULT_CURRENCY } from "@/constants/currencies";
 import type { Debt, FinancialProfile } from "@/types/debt";
 import { DEBT_COLORS } from "@/types/debt";
 import { calcMonthlyPayment } from "@/utils/calculations";
@@ -86,6 +87,20 @@ async function migrateFromAsyncStorage(): Promise<void> {
   } catch {}
 }
 
+function migrateDebts(debts: Debt[]): Debt[] {
+  return debts.map((d) => ({
+    ...d,
+    currency: d.currency || DEFAULT_CURRENCY,
+  }));
+}
+
+function migrateProfile(profile: FinancialProfile): FinancialProfile {
+  return {
+    ...profile,
+    defaultCurrency: profile.defaultCurrency || DEFAULT_CURRENCY,
+  };
+}
+
 interface DebtContextType {
   debts: Debt[];
   profile: FinancialProfile;
@@ -112,6 +127,7 @@ const SAMPLE_DEBTS: Debt[] = [
     annualRate: 0,
     totalMonths: 6,
     color: DEBT_COLORS[0],
+    currency: DEFAULT_CURRENCY,
   },
   {
     id: "2",
@@ -126,6 +142,7 @@ const SAMPLE_DEBTS: Debt[] = [
     annualRate: 8.5,
     totalMonths: 36,
     color: DEBT_COLORS[1],
+    currency: DEFAULT_CURRENCY,
   },
   {
     id: "3",
@@ -140,6 +157,7 @@ const SAMPLE_DEBTS: Debt[] = [
     annualRate: 0,
     totalMonths: 6,
     color: DEBT_COLORS[3],
+    currency: DEFAULT_CURRENCY,
   },
 ];
 
@@ -148,6 +166,7 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<FinancialProfile>({
     monthlySalary: 0,
     additionalRevenue: 0,
+    defaultCurrency: DEFAULT_CURRENCY,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -158,13 +177,13 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
         const stored = await secureGetItem(DEBTS_KEY);
         const storedProfile = await secureGetItem(PROFILE_KEY);
         if (stored) {
-          setDebts(JSON.parse(stored));
+          setDebts(migrateDebts(JSON.parse(stored)));
         } else {
           setDebts(SAMPLE_DEBTS);
           await secureSetItem(DEBTS_KEY, JSON.stringify(SAMPLE_DEBTS));
         }
         if (storedProfile) {
-          setProfile(JSON.parse(storedProfile));
+          setProfile(migrateProfile(JSON.parse(storedProfile)));
         }
       } catch {
         setDebts(SAMPLE_DEBTS);

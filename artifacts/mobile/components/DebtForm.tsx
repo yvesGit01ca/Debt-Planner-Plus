@@ -11,6 +11,9 @@ import {
   View,
 } from "react-native";
 
+import { CurrencyPicker } from "@/components/CurrencyPicker";
+import { DEFAULT_CURRENCY, getCurrencySymbol } from "@/constants/currencies";
+import { useDebts } from "@/context/DebtContext";
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
 import { MONTHS } from "@/types/debt";
@@ -70,7 +73,7 @@ function validateForm(fields: {
     if (principalVal <= 0) {
       errors.principal = "Must be a positive number";
     } else if (principalVal > 10_000_000) {
-      errors.principal = "Maximum $10,000,000";
+      errors.principal = "Maximum 10,000,000";
     }
   }
 
@@ -82,7 +85,7 @@ function validateForm(fields: {
       if (remainingVal < 0) {
         errors.remaining = "Must be zero or positive";
       } else if (remainingVal > 10_000_000) {
-        errors.remaining = "Maximum $10,000,000";
+        errors.remaining = "Maximum 10,000,000";
       }
     }
   }
@@ -142,6 +145,7 @@ function validateForm(fields: {
 
 export function DebtForm({ initial, onSave, onCancel }: Props) {
   const colors = useColors();
+  const { profile } = useDebts();
   const now = new Date();
   const [name, setName] = useState(initial?.name ?? "");
   const [type, setType] = useState<"loan" | "bnpl">(
@@ -168,8 +172,13 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
   const [startYear, setStartYear] = useState(
     initial ? String(initial.startYear) : String(now.getFullYear()),
   );
+  const [currency, setCurrency] = useState(
+    initial?.currency ?? profile.defaultCurrency ?? DEFAULT_CURRENCY,
+  );
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [submitted, setSubmitted] = useState(false);
+
+  const sym = getCurrencySymbol(currency);
 
   const monthlyPayment = useMemo(() => {
     const p = parseFloat(remaining || principal) || 0;
@@ -211,6 +220,7 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
       dueDay: Math.min(31, Math.max(1, parseInt(dueDay) || 1)),
       startMonth,
       startYear: parseInt(startYear) || now.getFullYear(),
+      currency,
     });
   };
 
@@ -299,13 +309,19 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
         </View>
       </View>
 
+      <CurrencyPicker
+        selected={currency}
+        onSelect={setCurrency}
+        label="Currency"
+      />
+
       <View style={styles.row}>
-        {renderField("Principal ($)", principal, setPrincipal, {
+        {renderField(`Principal (${sym})`, principal, setPrincipal, {
           placeholder: "5000",
           keyboard: "numeric",
           errorKey: "principal",
         })}
-        {renderField("Remaining ($)", remaining, setRemaining, {
+        {renderField(`Remaining (${sym})`, remaining, setRemaining, {
           placeholder: "5000",
           keyboard: "numeric",
           errorKey: "remaining",
@@ -401,7 +417,7 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
               { color: colors.foreground },
             ]}
           >
-            {formatCurrency(monthlyPayment)}
+            {formatCurrency(monthlyPayment, currency)}
           </Text>
         </View>
       )}

@@ -8,23 +8,25 @@ interface Props {
   totalMonthly: number;
   totalRemaining: number;
   activeCount: number;
+  currency?: string;
 }
 
 export function SummaryCards({
   totalMonthly,
   totalRemaining,
   activeCount,
+  currency = "USD",
 }: Props) {
   const colors = useColors();
   const items = [
     {
       label: "Due This Month",
-      value: formatCurrency(totalMonthly),
+      value: formatCurrency(totalMonthly, currency),
       accent: colors.primary,
     },
     {
       label: "Total Remaining",
-      value: formatCurrency(totalRemaining),
+      value: formatCurrency(totalRemaining, currency),
       accent: colors.destructive,
     },
     {

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { CurrencyPicker } from "@/components/CurrencyPicker";
 import { useDebts } from "@/context/DebtContext";
 import { useColors } from "@/hooks/useColors";
 import { MONTHS } from "@/types/debt";
@@ -25,6 +26,8 @@ export default function ForecastScreen() {
   const [revenue, setRevenue] = useState(
     String(profile.additionalRevenue || ""),
   );
+
+  const dc = profile.defaultCurrency || "USD";
 
   const totalIncome =
     (profile.monthlySalary || 0) + (profile.additionalRevenue || 0);
@@ -71,8 +74,18 @@ export default function ForecastScreen() {
     updateProfile({
       monthlySalary: parseFloat(salary) || 0,
       additionalRevenue: parseFloat(revenue) || 0,
+      defaultCurrency: dc,
     });
     setEditing(false);
+  };
+
+  const handleCurrencyChange = (code: string) => {
+    updateProfile({
+      ...profile,
+      monthlySalary: parseFloat(salary) || profile.monthlySalary || 0,
+      additionalRevenue: parseFloat(revenue) || profile.additionalRevenue || 0,
+      defaultCurrency: code,
+    });
   };
 
   return (
@@ -118,6 +131,11 @@ export default function ForecastScreen() {
 
           {editing ? (
             <View style={styles.incomeForm}>
+              <CurrencyPicker
+                selected={dc}
+                onSelect={handleCurrencyChange}
+                label="Default Currency"
+              />
               <View style={styles.incomeField}>
                 <Text
                   style={[
@@ -205,7 +223,7 @@ export default function ForecastScreen() {
                   ]}
                 >
                   {profile.monthlySalary
-                    ? formatCurrency(profile.monthlySalary)
+                    ? formatCurrency(profile.monthlySalary, dc)
                     : "Not set"}
                 </Text>
               </View>
@@ -225,7 +243,7 @@ export default function ForecastScreen() {
                   ]}
                 >
                   {profile.additionalRevenue
-                    ? formatCurrency(profile.additionalRevenue)
+                    ? formatCurrency(profile.additionalRevenue, dc)
                     : "Not set"}
                 </Text>
               </View>
@@ -247,7 +265,7 @@ export default function ForecastScreen() {
                     { color: colors.primary },
                   ]}
                 >
-                  {formatCurrency(totalIncome)}
+                  {formatCurrency(totalIncome, dc)}
                 </Text>
               </View>
             </View>
@@ -316,7 +334,7 @@ export default function ForecastScreen() {
                         { color: colors.accent },
                       ]}
                     >
-                      {formatCurrency(row.income)}
+                      {formatCurrency(row.income, dc)}
                     </Text>
                   </View>
                   <View style={styles.forecastItem}>
@@ -334,7 +352,7 @@ export default function ForecastScreen() {
                         { color: colors.destructive },
                       ]}
                     >
-                      {formatCurrency(row.obligations)}
+                      {formatCurrency(row.obligations, dc)}
                     </Text>
                   </View>
                   <View style={styles.forecastItem}>
@@ -357,7 +375,7 @@ export default function ForecastScreen() {
                         },
                       ]}
                     >
-                      {formatCurrency(row.net)}
+                      {formatCurrency(row.net, dc)}
                     </Text>
                   </View>
                   <View style={styles.forecastItem}>
@@ -380,7 +398,7 @@ export default function ForecastScreen() {
                         },
                       ]}
                     >
-                      {formatCurrency(row.cumulative)}
+                      {formatCurrency(row.cumulative, dc)}
                     </Text>
                   </View>
                 </View>

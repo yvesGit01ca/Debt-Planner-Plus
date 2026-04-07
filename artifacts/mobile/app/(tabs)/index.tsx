@@ -24,7 +24,7 @@ import { isDebtActiveInMonth } from "@/utils/calculations";
 export default function DashboardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { debts } = useDebts();
+  const { debts, profile } = useDebts();
   const now = new Date();
 
   const activeDebts = useMemo(
@@ -131,6 +131,7 @@ export default function DashboardScreen() {
           totalMonthly={totalMonthly}
           totalRemaining={totalRemaining}
           activeCount={activeDebts.length}
+          currency={profile.defaultCurrency}
         />
 
         <Text
@@ -164,7 +165,7 @@ export default function DashboardScreen() {
           ))
         )}
 
-        <MonthOutlook debts={debts} />
+        <MonthOutlook debts={debts} defaultCurrency={profile.defaultCurrency} />
 
         {inactiveDebts.length > 0 && (
           <View style={{ marginTop: 24 }}>
