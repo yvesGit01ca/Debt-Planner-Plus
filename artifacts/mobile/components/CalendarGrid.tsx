@@ -64,11 +64,11 @@ export function CalendarGrid({ debts, year, month }: Props) {
                 {
                   backgroundColor: day
                     ? isToday
-                      ? "rgba(232,197,71,0.12)"
+                      ? "rgba(73,79,223,0.12)"
                       : colors.card
                     : "transparent",
                   borderColor: isToday
-                    ? "rgba(232,197,71,0.4)"
+                    ? "rgba(73,79,223,0.4)"
                     : "transparent",
                 },
               ]}
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   cell: {
     width: "14.28%",
     minHeight: 52,
-    borderRadius: 6,
+    borderRadius: 8,
     padding: 4,
     borderWidth: 1,
   },
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   debtChip: {
-    borderRadius: 3,
+    borderRadius: 4,
     paddingHorizontal: 3,
     paddingVertical: 1,
     marginBottom: 1,
@@ -215,21 +215,21 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 7,
     fontFamily: "Inter_700Bold",
-    color: "#000",
+    color: "#fff",
   },
   legend: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 6,
-    marginTop: 14,
+    marginTop: 16,
   },
   legendItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: 6,
+    borderRadius: 9999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   legendDot: {
     width: 8,
@@ -239,6 +239,7 @@ const styles = StyleSheet.create({
   legendName: {
     fontSize: 11,
     fontFamily: "Inter_400Regular",
+    letterSpacing: 0.24,
   },
   legendAmount: {
     fontSize: 11,
@@ -248,10 +249,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginTop: 14,
+    paddingVertical: 14,
+    marginTop: 16,
   },
   totalLabel: {
     fontSize: 11,

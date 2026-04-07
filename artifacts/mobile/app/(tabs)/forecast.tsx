@@ -272,10 +272,10 @@ export default function ForecastScreen() {
                   styles.forecastRow,
                   {
                     backgroundColor: row.danger
-                      ? "rgba(255,107,107,0.08)"
+                      ? "rgba(226,59,74,0.08)"
                       : colors.card,
                     borderColor: row.danger
-                      ? "rgba(255,107,107,0.3)"
+                      ? "rgba(226,59,74,0.3)"
                       : colors.border,
                   },
                 ]}
@@ -290,13 +290,13 @@ export default function ForecastScreen() {
                     {row.month} {row.year}
                   </Text>
                   {row.danger && (
-                    <View style={styles.dangerBadge}>
+                    <View style={[styles.dangerBadge, { backgroundColor: "rgba(226,59,74,0.15)" }]}>
                       <Feather
                         name="alert-triangle"
                         size={10}
-                        color="#FF6B6B"
+                        color={colors.destructive}
                       />
-                      <Text style={styles.dangerText}>At Risk</Text>
+                      <Text style={[styles.dangerText, { color: colors.destructive }]}>At Risk</Text>
                     </View>
                   )}
                 </View>
@@ -420,12 +420,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontFamily: "Inter_700Bold",
+    letterSpacing: -0.5,
     marginBottom: 16,
   },
   incomeCard: {
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   incomeHeader: {
     flexDirection: "row",
@@ -450,22 +451,23 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   input: {
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: Platform.OS === "ios" ? 10 : 8,
+    paddingVertical: Platform.OS === "ios" ? 12 : 10,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
+    letterSpacing: 0.24,
   },
   saveIncomeBtn: {
     alignItems: "center",
-    borderRadius: 8,
-    paddingVertical: 10,
+    borderRadius: 9999,
+    paddingVertical: 12,
     marginTop: 4,
   },
   saveIncomeText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
   },
   incomeDisplay: {
     gap: 8,
@@ -478,6 +480,7 @@ const styles = StyleSheet.create({
   incomeLabel: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
+    letterSpacing: 0.24,
   },
   incomeValue: {
     fontSize: 14,
@@ -499,7 +502,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   forecastRow: {
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
@@ -512,21 +515,19 @@ const styles = StyleSheet.create({
   },
   forecastMonth: {
     fontSize: 14,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
   },
   dangerBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "rgba(255,107,107,0.15)",
-    borderRadius: 6,
+    borderRadius: 9999,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   dangerText: {
     fontSize: 10,
-    color: "#FF6B6B",
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Inter_500Medium",
   },
   forecastDetails: {
     flexDirection: "row",
@@ -557,5 +558,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 40,
     fontFamily: "Inter_400Regular",
+    letterSpacing: 0.24,
   },
 });

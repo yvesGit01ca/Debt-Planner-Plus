@@ -193,10 +193,10 @@ export function DebtCard({ debt, onEdit }: Props) {
             </Pressable>
             <Pressable
               onPress={handleDelete}
-              style={[styles.actionBtn, { backgroundColor: "#2a1111" }]}
+              style={[styles.actionBtn, { backgroundColor: "rgba(226,59,74,0.12)" }]}
             >
-              <Feather name="trash-2" size={14} color="#FF6B6B" />
-              <Text style={[styles.actionText, { color: "#FF6B6B" }]}>
+              <Feather name="trash-2" size={14} color={colors.destructive} />
+              <Text style={[styles.actionText, { color: colors.destructive }]}>
                 Delete
               </Text>
             </Pressable>
@@ -209,16 +209,16 @@ export function DebtCard({ debt, onEdit }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 8,
     borderWidth: 1,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 10,
+    marginBottom: 12,
   },
   headerLeft: {
     flexDirection: "row",
@@ -232,13 +232,15 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   name: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    letterSpacing: 0.24,
   },
   meta: {
-    fontSize: 10,
+    fontSize: 11,
     marginTop: 2,
     fontFamily: "Inter_400Regular",
+    letterSpacing: 0.24,
   },
   headerRight: {
     alignItems: "flex-end",
@@ -248,8 +250,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   dueDay: {
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
+    letterSpacing: 0.24,
   },
   progressRow: {
     flexDirection: "row",
@@ -266,11 +269,11 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   progressText: {
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
   },
   detail: {
-    marginTop: 14,
+    marginTop: 16,
   },
   detailRow: {
     flexDirection: "row",
@@ -278,18 +281,18 @@ const styles = StyleSheet.create({
   },
   detailCard: {
     flex: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 10,
   },
   detailLabel: {
     fontSize: 9,
     textTransform: "uppercase",
     letterSpacing: 0.8,
-    marginBottom: 3,
+    marginBottom: 4,
     fontFamily: "Inter_500Medium",
   },
   detailValue: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: "Inter_700Bold",
   },
   actions: {
@@ -303,11 +306,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    borderRadius: 8,
+    borderRadius: 9999,
     paddingVertical: 10,
   },
   actionText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
   },
 });

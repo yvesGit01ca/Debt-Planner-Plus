@@ -19,16 +19,16 @@ export interface FinancialProfile {
 }
 
 export const DEBT_COLORS = [
-  "#FF6B6B",
-  "#FFB347",
-  "#4ECDC4",
-  "#45B7D1",
-  "#96CEB4",
-  "#DDA0DD",
-  "#F0E68C",
-  "#87CEEB",
-  "#FF8C94",
-  "#A8E6CF",
+  "#494fdf",
+  "#00a87e",
+  "#ec7e00",
+  "#e23b4a",
+  "#007bc2",
+  "#936d62",
+  "#b09000",
+  "#428619",
+  "#e61e49",
+  "#505a63",
 ];
 
 export const MONTHS = [

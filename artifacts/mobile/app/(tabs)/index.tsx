@@ -167,7 +167,7 @@ export default function DashboardScreen() {
         <MonthOutlook debts={debts} />
 
         {inactiveDebts.length > 0 && (
-          <View style={{ marginTop: 20 }}>
+          <View style={{ marginTop: 24 }}>
             <Text
               style={[
                 styles.sectionTitle,
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   subtitle: {
     fontSize: 10,
@@ -215,13 +215,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    borderRadius: 8,
-    paddingHorizontal: 14,
+    borderRadius: 9999,
+    paddingHorizontal: 16,
     paddingVertical: 10,
   },
   addBtnText: {
     fontSize: 13,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_500Medium",
   },
   sectionTitle: {
     fontSize: 10,
@@ -232,11 +232,12 @@ const styles = StyleSheet.create({
   },
   empty: {
     alignItems: "center",
-    paddingVertical: 30,
+    paddingVertical: 32,
     gap: 8,
   },
   emptyText: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
+    letterSpacing: 0.24,
   },
 });

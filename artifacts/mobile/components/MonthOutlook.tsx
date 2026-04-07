@@ -78,7 +78,7 @@ export function MonthOutlook({ debts }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 4,
+    marginTop: 8,
   },
   title: {
     fontSize: 10,

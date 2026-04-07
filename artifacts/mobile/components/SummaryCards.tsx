@@ -57,18 +57,18 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   card: {
     flex: 1,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 20,
+    padding: 14,
   },
   label: {
     fontSize: 9,
     textTransform: "uppercase",
     letterSpacing: 1,
-    marginBottom: 6,
+    marginBottom: 8,
     fontFamily: "Inter_500Medium",
   },
   value: {

@@ -137,7 +137,7 @@ export function PayoffSimulator({ debt }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 14,
     marginTop: 12,
   },
@@ -145,6 +145,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 10,
     fontFamily: "Inter_500Medium",
+    letterSpacing: 0.24,
   },
   sliderRow: {
     flexDirection: "row",
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
   },
   input: {
     width: 70,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 6,
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: "47%",
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 10,
   },
   statLabel: {
@@ -193,5 +194,6 @@ const styles = StyleSheet.create({
   statSub: {
     fontSize: 10,
     fontFamily: "Inter_400Regular",
+    letterSpacing: 0.24,
   },
 });

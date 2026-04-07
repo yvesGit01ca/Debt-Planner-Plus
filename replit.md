@@ -25,7 +25,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Features**: Debt tracking (BNPL + loans), calendar view with payment due dates, payoff simulator with extra contribution calculator, 12-month financial forecast
 - **Data storage**: expo-secure-store (encrypted, with AsyncStorage fallback on web)
 - **Security**: Input validation on all form fields, deep link param sanitization, no secrets in JS bundle
-- **Theme**: Dark (#0a0a0a) with gold (#e8c547) accents
+- **Theme**: Revolut design system — dark (#191c1f) background, #494fdf primary blue, #00a87e success teal, #e23b4a danger red, pill buttons (9999px radius), 20px card radius, zero shadows, Inter font weight hierarchy
 - **Tabs**: Overview (dashboard), Calendar, Forecast
 - **Key files**:
   - `context/DebtContext.tsx` — state management + persistence

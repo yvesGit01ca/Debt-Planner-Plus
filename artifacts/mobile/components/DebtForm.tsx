@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   },
   field: {
     flex: 1,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   label: {
     fontSize: 11,
@@ -468,12 +468,13 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   input: {
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: Platform.OS === "ios" ? 10 : 8,
+    paddingVertical: Platform.OS === "ios" ? 12 : 10,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
+    letterSpacing: 0.24,
   },
   errorText: {
     fontSize: 11,
@@ -487,13 +488,13 @@ const styles = StyleSheet.create({
   typeBtn: {
     flex: 1,
     alignItems: "center",
-    borderRadius: 8,
+    borderRadius: 9999,
     borderWidth: 1,
     paddingVertical: 10,
   },
   typeBtnText: {
     fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Inter_500Medium",
   },
   row: {
     flexDirection: "row",
@@ -503,9 +504,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   monthBtn: {
-    borderRadius: 8,
+    borderRadius: 9999,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
   },
   monthBtnText: {
@@ -513,36 +514,38 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   estimate: {
-    borderRadius: 10,
-    padding: 14,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
   },
   estimateLabel: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 4,
+    fontFamily: "Inter_500Medium",
   },
   estimateValue: {
-    fontSize: 16,
+    fontSize: 22,
     fontFamily: "Inter_700Bold",
+    letterSpacing: -0.5,
   },
   actions: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 4,
+    marginTop: 8,
   },
   cancelBtn: {
     flex: 1,
     alignItems: "center",
-    borderRadius: 8,
+    justifyContent: "center",
+    borderRadius: 9999,
     borderWidth: 1,
     paddingVertical: 12,
   },
   cancelText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
   },
   saveBtn: {
     flex: 1,
@@ -550,11 +553,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    borderRadius: 8,
+    borderRadius: 9999,
     paddingVertical: 12,
   },
   saveText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
   },
 });

@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontFamily: "Inter_700Bold",
+    letterSpacing: -0.5,
     marginBottom: 16,
   },
   nav: {
@@ -119,11 +120,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   navBtn: {
-    borderRadius: 8,
+    borderRadius: 9999,
     padding: 10,
   },
   monthTitle: {
     fontSize: 16,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
   },
 });
