@@ -1,4 +1,5 @@
 import { getCurrencyInfo } from "@/constants/currencies";
+import type { Debt } from "@/types/debt";
 
 export function formatCurrency(n: number, currencyCode: string = "USD"): string {
   const info = getCurrencyInfo(currencyCode);
@@ -84,4 +85,30 @@ export function getProgress(
   const monthsLeft = getMonthsLeft(startMonth, startYear, totalMonths);
   if (totalMonths <= 0) return 100;
   return Math.min(100, ((totalMonths - monthsLeft) / totalMonths) * 100);
+}
+
+export interface CurrencyTotal {
+  currency: string;
+  total: number;
+}
+
+export function groupTotalsByCurrency(
+  debts: Debt[],
+  valueExtractor: (d: Debt) => number,
+): CurrencyTotal[] {
+  const map = new Map<string, number>();
+  for (const d of debts) {
+    const cc = d.currency || "USD";
+    map.set(cc, (map.get(cc) || 0) + valueExtractor(d));
+  }
+  return Array.from(map.entries())
+    .map(([currency, total]) => ({ currency, total }))
+    .sort((a, b) => b.total - a.total);
+}
+
+export function formatCurrencyTotals(totals: CurrencyTotal[]): string {
+  return totals
+    .filter((t) => t.total !== 0)
+    .map((t) => formatCurrency(t.total, t.currency))
+    .join(" + ");
 }

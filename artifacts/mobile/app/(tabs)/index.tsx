@@ -19,12 +19,12 @@ import { useDebts } from "@/context/DebtContext";
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
 import { MONTHS } from "@/types/debt";
-import { isDebtActiveInMonth } from "@/utils/calculations";
+import { groupTotalsByCurrency, isDebtActiveInMonth } from "@/utils/calculations";
 
 export default function DashboardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { debts, profile } = useDebts();
+  const { debts } = useDebts();
   const now = new Date();
 
   const activeDebts = useMemo(
@@ -58,13 +58,13 @@ export default function DashboardScreen() {
     [debts],
   );
 
-  const totalMonthly = useMemo(
-    () => activeDebts.reduce((s, d) => s + d.monthlyPayment, 0),
+  const monthlyTotals = useMemo(
+    () => groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment),
     [activeDebts],
   );
 
-  const totalRemaining = useMemo(
-    () => debts.reduce((s, d) => s + d.remaining, 0),
+  const remainingTotals = useMemo(
+    () => groupTotalsByCurrency(debts, (d) => d.remaining),
     [debts],
   );
 
@@ -128,10 +128,9 @@ export default function DashboardScreen() {
         </View>
 
         <SummaryCards
-          totalMonthly={totalMonthly}
-          totalRemaining={totalRemaining}
+          monthlyTotals={monthlyTotals}
+          remainingTotals={remainingTotals}
           activeCount={activeDebts.length}
-          currency={profile.defaultCurrency}
         />
 
         <Text
@@ -165,7 +164,7 @@ export default function DashboardScreen() {
           ))
         )}
 
-        <MonthOutlook debts={debts} defaultCurrency={profile.defaultCurrency} />
+        <MonthOutlook debts={debts} />
 
         {inactiveDebts.length > 0 && (
           <View style={{ marginTop: 24 }}>

@@ -15,7 +15,7 @@ import { CurrencyPicker } from "@/components/CurrencyPicker";
 import { useDebts } from "@/context/DebtContext";
 import { useColors } from "@/hooks/useColors";
 import { MONTHS } from "@/types/debt";
-import { formatCurrency, isDebtActiveInMonth } from "@/utils/calculations";
+import { formatCurrency, groupTotalsByCurrency, isDebtActiveInMonth } from "@/utils/calculations";
 
 export default function ForecastScreen() {
   const colors = useColors();
@@ -43,33 +43,27 @@ export default function ForecastScreen() {
         m -= 12;
         y++;
       }
-      const obligations = debts.reduce((s, d) => {
-        if (
-          isDebtActiveInMonth(
-            d.startMonth,
-            d.startYear,
-            d.totalMonths,
-            m,
-            y,
-          )
-        ) {
-          return s + d.monthlyPayment;
-        }
-        return s;
-      }, 0);
-      const net = totalIncome - obligations;
+      const activeDebts = debts.filter((d) =>
+        isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, m, y),
+      );
+      const obligationTotals = groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment);
+      const dcObligations = obligationTotals.find((t) => t.currency === dc)?.total || 0;
+      const otherObligations = obligationTotals.filter((t) => t.currency !== dc);
+      const net = totalIncome - dcObligations;
       cumulative += net;
       return {
         month: MONTHS[m],
         year: y,
         income: totalIncome,
-        obligations,
+        dcObligations,
+        otherObligations,
+        obligationTotals,
         net,
         cumulative,
-        danger: obligations > totalIncome && totalIncome > 0,
+        danger: dcObligations > totalIncome && totalIncome > 0,
       };
     });
-  }, [debts, totalIncome]);
+  }, [debts, totalIncome, dc]);
 
   const handleSaveProfile = () => {
     updateProfile({
@@ -349,14 +343,27 @@ export default function ForecastScreen() {
                     >
                       Obligations
                     </Text>
-                    <Text
-                      style={[
-                        styles.forecastValue,
-                        { color: colors.destructive },
-                      ]}
-                    >
-                      {formatCurrency(row.obligations, dc)}
-                    </Text>
+                    {row.obligationTotals.map((t) => (
+                      <Text
+                        key={t.currency}
+                        style={[
+                          styles.forecastValue,
+                          { color: colors.destructive },
+                        ]}
+                      >
+                        {formatCurrency(t.total, t.currency)}
+                      </Text>
+                    ))}
+                    {row.obligationTotals.length === 0 && (
+                      <Text
+                        style={[
+                          styles.forecastValue,
+                          { color: colors.destructive },
+                        ]}
+                      >
+                        {formatCurrency(0, dc)}
+                      </Text>
+                    )}
                   </View>
                   <View style={styles.forecastItem}>
                     <Text
@@ -365,7 +372,7 @@ export default function ForecastScreen() {
                         { color: colors.mutedForeground },
                       ]}
                     >
-                      Net
+                      Net ({dc})
                     </Text>
                     <Text
                       style={[
@@ -388,7 +395,7 @@ export default function ForecastScreen() {
                         { color: colors.mutedForeground },
                       ]}
                     >
-                      Cumulative
+                      Cumulative ({dc})
                     </Text>
                     <Text
                       style={[

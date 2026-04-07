@@ -4,14 +4,13 @@ import { type DimensionValue, StyleSheet, Text, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
 import { MONTHS } from "@/types/debt";
-import { formatCurrency, isDebtActiveInMonth } from "@/utils/calculations";
+import { formatCurrency, groupTotalsByCurrency, isDebtActiveInMonth } from "@/utils/calculations";
 
 interface Props {
   debts: Debt[];
-  defaultCurrency?: string;
 }
 
-export function MonthOutlook({ debts, defaultCurrency = "USD" }: Props) {
+export function MonthOutlook({ debts }: Props) {
   const colors = useColors();
   const now = new Date();
 
@@ -22,17 +21,16 @@ export function MonthOutlook({ debts, defaultCurrency = "USD" }: Props) {
       m -= 12;
       y++;
     }
-    const total = debts.reduce((s, d) => {
-      if (isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, m, y)) {
-        return s + d.monthlyPayment;
-      }
-      return s;
-    }, 0);
-    return { month: MONTHS[m], total };
+    const activeDebts = debts.filter((d) =>
+      isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, m, y),
+    );
+    const totals = groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment);
+    const rawTotal = activeDebts.reduce((s, d) => s + d.monthlyPayment, 0);
+    return { month: MONTHS[m], totals, rawTotal };
   });
 
   const maxTotal =
-    Math.max(...monthData.map((d) => d.total), 1);
+    Math.max(...monthData.map((d) => d.rawTotal), 1);
 
   return (
     <View style={styles.container}>
@@ -54,7 +52,7 @@ export function MonthOutlook({ debts, defaultCurrency = "USD" }: Props) {
                 styles.barFill,
                 {
                   backgroundColor: colors.primary,
-                  width: `${(item.total / maxTotal) * 100}%` as DimensionValue,
+                  width: `${(item.rawTotal / maxTotal) * 100}%` as DimensionValue,
                 },
               ]}
             />
@@ -63,13 +61,15 @@ export function MonthOutlook({ debts, defaultCurrency = "USD" }: Props) {
             style={[
               styles.amount,
               {
-                color: item.total > 0
+                color: item.rawTotal > 0
                   ? colors.foreground
                   : colors.mutedForeground,
               },
             ]}
           >
-            {item.total > 0 ? formatCurrency(item.total, defaultCurrency) : "--"}
+            {item.totals.length > 0
+              ? item.totals.map((t) => formatCurrency(t.total, t.currency)).join("\n")
+              : "--"}
           </Text>
         </View>
       ))}
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   amount: {
-    width: 72,
+    width: 90,
     fontSize: 12,
     textAlign: "right",
     fontFamily: "Inter_700Bold",

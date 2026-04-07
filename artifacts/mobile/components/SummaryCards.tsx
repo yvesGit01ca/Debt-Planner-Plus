@@ -2,31 +2,38 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
-import { formatCurrency } from "@/utils/calculations";
+import type { CurrencyTotal } from "@/utils/calculations";
+import { formatCurrency, formatCurrencyTotals } from "@/utils/calculations";
 
 interface Props {
-  totalMonthly: number;
-  totalRemaining: number;
+  monthlyTotals: CurrencyTotal[];
+  remainingTotals: CurrencyTotal[];
   activeCount: number;
-  currency?: string;
 }
 
 export function SummaryCards({
-  totalMonthly,
-  totalRemaining,
+  monthlyTotals,
+  remainingTotals,
   activeCount,
-  currency = "USD",
 }: Props) {
   const colors = useColors();
+
+  const monthlyDisplay = monthlyTotals.length > 0
+    ? formatCurrencyTotals(monthlyTotals)
+    : formatCurrency(0);
+  const remainingDisplay = remainingTotals.length > 0
+    ? formatCurrencyTotals(remainingTotals)
+    : formatCurrency(0);
+
   const items = [
     {
       label: "Due This Month",
-      value: formatCurrency(totalMonthly, currency),
+      value: monthlyDisplay,
       accent: colors.primary,
     },
     {
       label: "Total Remaining",
-      value: formatCurrency(totalRemaining, currency),
+      value: remainingDisplay,
       accent: colors.destructive,
     },
     {
@@ -46,7 +53,11 @@ export function SummaryCards({
           <Text style={[styles.label, { color: colors.mutedForeground }]}>
             {item.label}
           </Text>
-          <Text style={[styles.value, { color: item.accent }]}>
+          <Text
+            style={[styles.value, { color: item.accent }]}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+          >
             {item.value}
           </Text>
         </View>

@@ -3,18 +3,17 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
-import { formatCurrency, isDebtActiveInMonth } from "@/utils/calculations";
+import { formatCurrency, groupTotalsByCurrency, isDebtActiveInMonth } from "@/utils/calculations";
 
 interface Props {
   debts: Debt[];
   year: number;
   month: number;
-  defaultCurrency?: string;
 }
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-export function CalendarGrid({ debts, year, month, defaultCurrency = "USD" }: Props) {
+export function CalendarGrid({ debts, year, month }: Props) {
   const colors = useColors();
   const days = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
@@ -135,43 +134,43 @@ export function CalendarGrid({ debts, year, month, defaultCurrency = "USD" }: Pr
                 { color: d.color },
               ]}
             >
-              {formatCurrency(d.monthlyPayment, d.currency || defaultCurrency)}
+              {formatCurrency(d.monthlyPayment, d.currency || "USD")}
             </Text>
           </View>
         ))}
       </View>
 
-      <View
-        style={[styles.totalBar, { backgroundColor: colors.card }]}
-      >
-        <Text
-          style={[
-            styles.totalLabel,
-            { color: colors.mutedForeground },
-          ]}
-        >
-          Total due this month
-        </Text>
-        <Text style={[styles.totalValue, { color: colors.primary }]}>
-          {formatCurrency(
-            debts.reduce((s, d) => {
-              if (
-                isDebtActiveInMonth(
-                  d.startMonth,
-                  d.startYear,
-                  d.totalMonths,
-                  month,
-                  year,
-                )
-              ) {
-                return s + d.monthlyPayment;
-              }
-              return s;
-            }, 0),
-            defaultCurrency,
-          )}
-        </Text>
-      </View>
+      {(() => {
+        const activeDebts = debts.filter((d) =>
+          isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, month, year),
+        );
+        const totals = groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment);
+        return (
+          <View
+            style={[styles.totalBar, { backgroundColor: colors.card }]}
+          >
+            <Text
+              style={[
+                styles.totalLabel,
+                { color: colors.mutedForeground },
+              ]}
+            >
+              Total due this month
+            </Text>
+            <View style={styles.totalValues}>
+              {totals.length > 0 ? totals.map((t) => (
+                <Text key={t.currency} style={[styles.totalValue, { color: colors.primary }]}>
+                  {formatCurrency(t.total, t.currency)}
+                </Text>
+              )) : (
+                <Text style={[styles.totalValue, { color: colors.primary }]}>
+                  {formatCurrency(0)}
+                </Text>
+              )}
+            </View>
+          </View>
+        );
+      })()}
     </View>
   );
 }
@@ -261,6 +260,9 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1,
     fontFamily: "Inter_500Medium",
+  },
+  totalValues: {
+    alignItems: "flex-end" as const,
   },
   totalValue: {
     fontSize: 18,
