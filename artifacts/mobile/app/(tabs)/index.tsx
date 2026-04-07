@@ -43,6 +43,21 @@ export default function DashboardScreen() {
     [debts],
   );
 
+  const inactiveDebts = useMemo(
+    () =>
+      debts.filter(
+        (d) =>
+          !isDebtActiveInMonth(
+            d.startMonth,
+            d.startYear,
+            d.totalMonths,
+            now.getMonth(),
+            now.getFullYear(),
+          ),
+      ),
+    [debts],
+  );
+
   const totalMonthly = useMemo(
     () => activeDebts.reduce((s, d) => s + d.monthlyPayment, 0),
     [activeDebts],
@@ -150,6 +165,22 @@ export default function DashboardScreen() {
         )}
 
         <MonthOutlook debts={debts} />
+
+        {inactiveDebts.length > 0 && (
+          <View style={{ marginTop: 20 }}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colors.mutedForeground },
+              ]}
+            >
+              Inactive / Upcoming Debts
+            </Text>
+            {inactiveDebts.map((d) => (
+              <DebtCard key={d.id} debt={d} onEdit={handleEdit} />
+            ))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
