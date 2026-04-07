@@ -26,6 +26,7 @@ export default function ForecastScreen() {
   const [revenue, setRevenue] = useState(
     String(profile.additionalRevenue || ""),
   );
+  const [editCurrency, setEditCurrency] = useState(profile.defaultCurrency || "USD");
 
   const dc = profile.defaultCurrency || "USD";
 
@@ -74,18 +75,20 @@ export default function ForecastScreen() {
     updateProfile({
       monthlySalary: parseFloat(salary) || 0,
       additionalRevenue: parseFloat(revenue) || 0,
-      defaultCurrency: dc,
+      defaultCurrency: editCurrency,
     });
     setEditing(false);
   };
 
-  const handleCurrencyChange = (code: string) => {
-    updateProfile({
-      ...profile,
-      monthlySalary: parseFloat(salary) || profile.monthlySalary || 0,
-      additionalRevenue: parseFloat(revenue) || profile.additionalRevenue || 0,
-      defaultCurrency: code,
-    });
+  const handleStartEditing = () => {
+    setSalary(String(profile.monthlySalary || ""));
+    setRevenue(String(profile.additionalRevenue || ""));
+    setEditCurrency(dc);
+    setEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    setEditing(false);
   };
 
   return (
@@ -120,7 +123,7 @@ export default function ForecastScreen() {
             >
               Monthly Income
             </Text>
-            <Pressable onPress={() => setEditing(!editing)}>
+            <Pressable onPress={() => editing ? handleCancelEditing() : handleStartEditing()}>
               <Feather
                 name={editing ? "x" : "edit-2"}
                 size={16}
@@ -132,8 +135,8 @@ export default function ForecastScreen() {
           {editing ? (
             <View style={styles.incomeForm}>
               <CurrencyPicker
-                selected={dc}
-                onSelect={handleCurrencyChange}
+                selected={editCurrency}
+                onSelect={setEditCurrency}
                 label="Default Currency"
               />
               <View style={styles.incomeField}>
