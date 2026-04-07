@@ -44,6 +44,13 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
 # Replit
 .cache/
 .local/

@@ -13,14 +13,24 @@ import { useDebts } from "@/context/DebtContext";
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
 
+function sanitizeEditId(raw: string | string[] | undefined): string | null {
+  if (!raw) return null;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof value !== "string") return null;
+  const cleaned = value.replace(/[^a-zA-Z0-9]/g, "");
+  if (cleaned.length === 0 || cleaned.length > 50) return null;
+  return cleaned;
+}
+
 export default function AddDebtScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { debts, addDebt, updateDebt } = useDebts();
   const params = useLocalSearchParams<{ editId?: string }>();
 
-  const editingDebt = params.editId
-    ? debts.find((d) => d.id === params.editId) ?? null
+  const safeEditId = sanitizeEditId(params.editId);
+  const editingDebt = safeEditId
+    ? debts.find((d) => d.id === safeEditId) ?? null
     : null;
 
   const handleSave = (

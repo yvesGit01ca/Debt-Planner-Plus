@@ -22,6 +22,89 @@ interface Props {
   onCancel: () => void;
 }
 
+interface ValidationErrors {
+  name?: string;
+  principal?: string;
+  remaining?: string;
+  annualRate?: string;
+  totalMonths?: string;
+  dueDay?: string;
+  startYear?: string;
+}
+
+function validateForm(fields: {
+  name: string;
+  type: "loan" | "bnpl";
+  principal: string;
+  remaining: string;
+  annualRate: string;
+  totalMonths: string;
+  dueDay: string;
+  startYear: string;
+}): ValidationErrors {
+  const errors: ValidationErrors = {};
+
+  if (!fields.name.trim()) {
+    errors.name = "Name is required";
+  } else if (fields.name.trim().length > 100) {
+    errors.name = "Name must be 100 characters or less";
+  }
+
+  const principalVal = parseFloat(fields.principal);
+  if (!fields.principal) {
+    errors.principal = "Principal is required";
+  } else if (isNaN(principalVal) || principalVal <= 0) {
+    errors.principal = "Must be a positive number";
+  } else if (principalVal > 10_000_000) {
+    errors.principal = "Maximum $10,000,000";
+  }
+
+  if (fields.remaining) {
+    const remainingVal = parseFloat(fields.remaining);
+    if (isNaN(remainingVal) || remainingVal < 0) {
+      errors.remaining = "Must be zero or positive";
+    } else if (remainingVal > 10_000_000) {
+      errors.remaining = "Maximum $10,000,000";
+    }
+  }
+
+  if (fields.type === "loan") {
+    const rateVal = parseFloat(fields.annualRate);
+    if (!fields.annualRate) {
+      errors.annualRate = "Rate is required for loans";
+    } else if (isNaN(rateVal) || rateVal < 0) {
+      errors.annualRate = "Must be zero or positive";
+    } else if (rateVal > 100) {
+      errors.annualRate = "Maximum 100%";
+    }
+  }
+
+  const monthsVal = parseInt(fields.totalMonths, 10);
+  if (!fields.totalMonths) {
+    errors.totalMonths = "Required";
+  } else if (isNaN(monthsVal) || monthsVal < 1) {
+    errors.totalMonths = "At least 1 month";
+  } else if (monthsVal > 600) {
+    errors.totalMonths = "Maximum 600 months";
+  }
+
+  const dayVal = parseInt(fields.dueDay, 10);
+  if (!fields.dueDay) {
+    errors.dueDay = "Required";
+  } else if (isNaN(dayVal) || dayVal < 1 || dayVal > 31) {
+    errors.dueDay = "Must be 1-31";
+  }
+
+  const yearVal = parseInt(fields.startYear, 10);
+  if (!fields.startYear) {
+    errors.startYear = "Required";
+  } else if (isNaN(yearVal) || yearVal < 2000 || yearVal > 2100) {
+    errors.startYear = "2000-2100";
+  }
+
+  return errors;
+}
+
 export function DebtForm({ initial, onSave, onCancel }: Props) {
   const colors = useColors();
   const now = new Date();
@@ -50,6 +133,8 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
   const [startYear, setStartYear] = useState(
     initial ? String(initial.startYear) : String(now.getFullYear()),
   );
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [submitted, setSubmitted] = useState(false);
 
   const monthlyPayment = useMemo(() => {
     const p = parseFloat(remaining || principal) || 0;
@@ -60,7 +145,24 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
   }, [remaining, principal, annualRate, totalMonths, type]);
 
   const handleSave = () => {
-    if (!name.trim()) return;
+    setSubmitted(true);
+    const validationErrors = validateForm({
+      name,
+      type,
+      principal,
+      remaining,
+      annualRate,
+      totalMonths,
+      dueDay,
+      startYear,
+    });
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     onSave({
       ...(initial?.id ? { id: initial.id } : {}),
@@ -81,7 +183,7 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
     label: string,
     value: string,
     onChange: (v: string) => void,
-    opts?: { placeholder?: string; keyboard?: "numeric" | "default" },
+    opts?: { placeholder?: string; keyboard?: "numeric" | "default"; errorKey?: keyof ValidationErrors },
   ) => (
     <View style={styles.field}>
       <Text style={[styles.label, { color: colors.mutedForeground }]}>
@@ -93,7 +195,9 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
           {
             backgroundColor: colors.input,
             color: colors.foreground,
-            borderColor: colors.border,
+            borderColor: submitted && opts?.errorKey && errors[opts.errorKey]
+              ? colors.destructive
+              : colors.border,
           },
         ]}
         value={value}
@@ -103,6 +207,11 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
         keyboardType={opts?.keyboard ?? "default"}
         keyboardAppearance="dark"
       />
+      {submitted && opts?.errorKey && errors[opts.errorKey] && (
+        <Text style={[styles.errorText, { color: colors.destructive }]}>
+          {errors[opts.errorKey]}
+        </Text>
+      )}
     </View>
   );
 
@@ -115,6 +224,7 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
     >
       {renderField("Debt Name", name, setName, {
         placeholder: "e.g. iPhone Installment",
+        errorKey: "name",
       })}
 
       <View style={styles.field}>
@@ -158,10 +268,12 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
         {renderField("Principal ($)", principal, setPrincipal, {
           placeholder: "5000",
           keyboard: "numeric",
+          errorKey: "principal",
         })}
         {renderField("Remaining ($)", remaining, setRemaining, {
           placeholder: "5000",
           keyboard: "numeric",
+          errorKey: "remaining",
         })}
       </View>
 
@@ -170,10 +282,12 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
           renderField("Annual Rate (%)", annualRate, setAnnualRate, {
             placeholder: "8.5",
             keyboard: "numeric",
+            errorKey: "annualRate",
           })}
         {renderField("Months Left", totalMonths, setTotalMonths, {
           placeholder: "36",
           keyboard: "numeric",
+          errorKey: "totalMonths",
         })}
       </View>
 
@@ -181,10 +295,12 @@ export function DebtForm({ initial, onSave, onCancel }: Props) {
         {renderField("Due Day", dueDay, setDueDay, {
           placeholder: "15",
           keyboard: "numeric",
+          errorKey: "dueDay",
         })}
         {renderField("Start Year", startYear, setStartYear, {
           placeholder: String(now.getFullYear()),
           keyboard: "numeric",
+          errorKey: "startYear",
         })}
       </View>
 
@@ -323,6 +439,11 @@ const styles = StyleSheet.create({
     paddingVertical: Platform.OS === "ios" ? 10 : 8,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
+  },
+  errorText: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    marginTop: 4,
   },
   typeRow: {
     flexDirection: "row",

@@ -23,7 +23,8 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Path**: `artifacts/mobile/`
 - **Type**: Expo React Native app
 - **Features**: Debt tracking (BNPL + loans), calendar view with payment due dates, payoff simulator with extra contribution calculator, 12-month financial forecast
-- **Data storage**: AsyncStorage (local, no backend)
+- **Data storage**: expo-secure-store (encrypted, with AsyncStorage fallback on web)
+- **Security**: Input validation on all form fields, deep link param sanitization, no secrets in JS bundle
 - **Theme**: Dark (#0a0a0a) with gold (#e8c547) accents
 - **Tabs**: Overview (dashboard), Calendar, Forecast
 - **Key files**:

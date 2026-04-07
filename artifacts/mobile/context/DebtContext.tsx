@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import React, {
   createContext,
   useCallback,
@@ -6,6 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { Platform } from "react-native";
 
 import type { Debt, FinancialProfile } from "@/types/debt";
 import { DEBT_COLORS } from "@/types/debt";
@@ -13,6 +15,59 @@ import { calcMonthlyPayment } from "@/utils/calculations";
 
 const DEBTS_KEY = "@ledger_debts";
 const PROFILE_KEY = "@ledger_profile";
+const SECURE_STORE_MAX = 2048;
+
+async function secureSetItem(key: string, value: string): Promise<void> {
+  if (Platform.OS === "web") {
+    await AsyncStorage.setItem(key, value);
+    return;
+  }
+  if (value.length <= SECURE_STORE_MAX) {
+    await SecureStore.setItemAsync(key, value);
+    await SecureStore.deleteItemAsync(`${key}_chunks`);
+  } else {
+    const chunkCount = Math.ceil(value.length / SECURE_STORE_MAX);
+    await SecureStore.setItemAsync(`${key}_chunks`, String(chunkCount));
+    for (let i = 0; i < chunkCount; i++) {
+      const chunk = value.slice(i * SECURE_STORE_MAX, (i + 1) * SECURE_STORE_MAX);
+      await SecureStore.setItemAsync(`${key}_${i}`, chunk);
+    }
+  }
+}
+
+async function secureGetItem(key: string): Promise<string | null> {
+  if (Platform.OS === "web") {
+    return AsyncStorage.getItem(key);
+  }
+  const chunkCountStr = await SecureStore.getItemAsync(`${key}_chunks`);
+  if (chunkCountStr) {
+    const chunkCount = parseInt(chunkCountStr, 10);
+    let result = "";
+    for (let i = 0; i < chunkCount; i++) {
+      const chunk = await SecureStore.getItemAsync(`${key}_${i}`);
+      if (chunk === null) return null;
+      result += chunk;
+    }
+    return result;
+  }
+  return SecureStore.getItemAsync(key);
+}
+
+async function migrateFromAsyncStorage(): Promise<void> {
+  if (Platform.OS === "web") return;
+  try {
+    const debts = await AsyncStorage.getItem(DEBTS_KEY);
+    const profile = await AsyncStorage.getItem(PROFILE_KEY);
+    if (debts) {
+      await secureSetItem(DEBTS_KEY, debts);
+      await AsyncStorage.removeItem(DEBTS_KEY);
+    }
+    if (profile) {
+      await secureSetItem(PROFILE_KEY, profile);
+      await AsyncStorage.removeItem(PROFILE_KEY);
+    }
+  } catch {}
+}
 
 interface DebtContextType {
   debts: Debt[];
@@ -82,13 +137,14 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(DEBTS_KEY);
-        const storedProfile = await AsyncStorage.getItem(PROFILE_KEY);
+        await migrateFromAsyncStorage();
+        const stored = await secureGetItem(DEBTS_KEY);
+        const storedProfile = await secureGetItem(PROFILE_KEY);
         if (stored) {
           setDebts(JSON.parse(stored));
         } else {
           setDebts(SAMPLE_DEBTS);
-          await AsyncStorage.setItem(DEBTS_KEY, JSON.stringify(SAMPLE_DEBTS));
+          await secureSetItem(DEBTS_KEY, JSON.stringify(SAMPLE_DEBTS));
         }
         if (storedProfile) {
           setProfile(JSON.parse(storedProfile));
@@ -103,7 +159,7 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
 
   const persist = useCallback(async (updated: Debt[]) => {
     try {
-      await AsyncStorage.setItem(DEBTS_KEY, JSON.stringify(updated));
+      await secureSetItem(DEBTS_KEY, JSON.stringify(updated));
     } catch {}
   }, []);
 
@@ -163,7 +219,7 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = useCallback(
     (p: FinancialProfile) => {
       setProfile(p);
-      AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(p)).catch(() => {});
+      secureSetItem(PROFILE_KEY, JSON.stringify(p)).catch(() => {});
     },
     [],
   );
