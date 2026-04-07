@@ -17,6 +17,14 @@ const DEBTS_KEY = "@ledger_debts";
 const PROFILE_KEY = "@ledger_profile";
 const SECURE_STORE_MAX = 2048;
 
+async function clearStaleChunks(key: string, keepCount: number): Promise<void> {
+  for (let i = keepCount; i < 100; i++) {
+    const existing = await SecureStore.getItemAsync(`${key}_${i}`);
+    if (!existing) break;
+    await SecureStore.deleteItemAsync(`${key}_${i}`);
+  }
+}
+
 async function secureSetItem(key: string, value: string): Promise<void> {
   if (Platform.OS === "web") {
     await AsyncStorage.setItem(key, value);
@@ -24,13 +32,22 @@ async function secureSetItem(key: string, value: string): Promise<void> {
   }
   if (value.length <= SECURE_STORE_MAX) {
     await SecureStore.setItemAsync(key, value);
-    await SecureStore.deleteItemAsync(`${key}_chunks`);
+    const prevChunks = await SecureStore.getItemAsync(`${key}_chunks`);
+    if (prevChunks) {
+      await clearStaleChunks(key, 0);
+      await SecureStore.deleteItemAsync(`${key}_chunks`);
+    }
   } else {
     const chunkCount = Math.ceil(value.length / SECURE_STORE_MAX);
+    const prevChunksStr = await SecureStore.getItemAsync(`${key}_chunks`);
+    const prevCount = prevChunksStr ? parseInt(prevChunksStr, 10) : 0;
     await SecureStore.setItemAsync(`${key}_chunks`, String(chunkCount));
     for (let i = 0; i < chunkCount; i++) {
       const chunk = value.slice(i * SECURE_STORE_MAX, (i + 1) * SECURE_STORE_MAX);
       await SecureStore.setItemAsync(`${key}_${i}`, chunk);
+    }
+    if (prevCount > chunkCount) {
+      await clearStaleChunks(key, chunkCount);
     }
   }
 }

@@ -32,6 +32,17 @@ interface ValidationErrors {
   startYear?: string;
 }
 
+const NUMERIC_FLOAT = /^-?\d+(\.\d+)?$/;
+const NUMERIC_INT = /^\d+$/;
+
+function isValidFloat(s: string): boolean {
+  return NUMERIC_FLOAT.test(s.trim());
+}
+
+function isValidInt(s: string): boolean {
+  return NUMERIC_INT.test(s.trim());
+}
+
 function validateForm(fields: {
   name: string;
   type: "loan" | "bnpl";
@@ -50,56 +61,80 @@ function validateForm(fields: {
     errors.name = "Name must be 100 characters or less";
   }
 
-  const principalVal = parseFloat(fields.principal);
   if (!fields.principal) {
     errors.principal = "Principal is required";
-  } else if (isNaN(principalVal) || principalVal <= 0) {
-    errors.principal = "Must be a positive number";
-  } else if (principalVal > 10_000_000) {
-    errors.principal = "Maximum $10,000,000";
+  } else if (!isValidFloat(fields.principal)) {
+    errors.principal = "Enter a valid number";
+  } else {
+    const principalVal = parseFloat(fields.principal);
+    if (principalVal <= 0) {
+      errors.principal = "Must be a positive number";
+    } else if (principalVal > 10_000_000) {
+      errors.principal = "Maximum $10,000,000";
+    }
   }
 
   if (fields.remaining) {
-    const remainingVal = parseFloat(fields.remaining);
-    if (isNaN(remainingVal) || remainingVal < 0) {
-      errors.remaining = "Must be zero or positive";
-    } else if (remainingVal > 10_000_000) {
-      errors.remaining = "Maximum $10,000,000";
+    if (!isValidFloat(fields.remaining)) {
+      errors.remaining = "Enter a valid number";
+    } else {
+      const remainingVal = parseFloat(fields.remaining);
+      if (remainingVal < 0) {
+        errors.remaining = "Must be zero or positive";
+      } else if (remainingVal > 10_000_000) {
+        errors.remaining = "Maximum $10,000,000";
+      }
     }
   }
 
   if (fields.type === "loan") {
-    const rateVal = parseFloat(fields.annualRate);
     if (!fields.annualRate) {
       errors.annualRate = "Rate is required for loans";
-    } else if (isNaN(rateVal) || rateVal < 0) {
-      errors.annualRate = "Must be zero or positive";
-    } else if (rateVal > 100) {
-      errors.annualRate = "Maximum 100%";
+    } else if (!isValidFloat(fields.annualRate)) {
+      errors.annualRate = "Enter a valid number";
+    } else {
+      const rateVal = parseFloat(fields.annualRate);
+      if (rateVal < 0) {
+        errors.annualRate = "Must be zero or positive";
+      } else if (rateVal > 100) {
+        errors.annualRate = "Maximum 100%";
+      }
     }
   }
 
-  const monthsVal = parseInt(fields.totalMonths, 10);
   if (!fields.totalMonths) {
     errors.totalMonths = "Required";
-  } else if (isNaN(monthsVal) || monthsVal < 1) {
-    errors.totalMonths = "At least 1 month";
-  } else if (monthsVal > 600) {
-    errors.totalMonths = "Maximum 600 months";
+  } else if (!isValidInt(fields.totalMonths)) {
+    errors.totalMonths = "Enter a whole number";
+  } else {
+    const monthsVal = parseInt(fields.totalMonths, 10);
+    if (monthsVal < 1) {
+      errors.totalMonths = "At least 1 month";
+    } else if (monthsVal > 600) {
+      errors.totalMonths = "Maximum 600 months";
+    }
   }
 
-  const dayVal = parseInt(fields.dueDay, 10);
   if (!fields.dueDay) {
     errors.dueDay = "Required";
-  } else if (isNaN(dayVal) || dayVal < 1 || dayVal > 31) {
-    errors.dueDay = "Must be 1-31";
+  } else if (!isValidInt(fields.dueDay)) {
+    errors.dueDay = "Enter a whole number";
+  } else {
+    const dayVal = parseInt(fields.dueDay, 10);
+    if (dayVal < 1 || dayVal > 31) {
+      errors.dueDay = "Must be 1-31";
+    }
   }
 
-  const yearVal = parseInt(fields.startYear, 10);
   if (!fields.startYear) {
     errors.startYear = "Required";
-  } else if (isNaN(yearVal) || yearVal < 2000 || yearVal > 2100) {
-    errors.startYear = "2000-2100";
+  } else if (!isValidInt(fields.startYear)) {
+    errors.startYear = "Enter a valid year";
+  } else {
+    const yearVal = parseInt(fields.startYear, 10);
+    if (yearVal < 2000 || yearVal > 2100) {
+      errors.startYear = "2000-2100";
+    }
   }
 
   return errors;
