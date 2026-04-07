@@ -3,11 +3,13 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
+  LayoutAnimation,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  UIManager,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -45,7 +47,12 @@ export default function CalendarScreen() {
     setSelectedDay(null);
   };
 
+  if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+
   const handleSelectDay = (day: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSelectedDay((prev) => (prev === day ? null : day));
   };
 
@@ -134,6 +141,7 @@ export default function CalendarScreen() {
           month={month}
           selectedDay={selectedDay}
           onSelectDay={handleSelectDay}
+          hideSummary={selectedDay !== null}
         />
 
         {selectedDay !== null && (
@@ -150,7 +158,10 @@ export default function CalendarScreen() {
                 </Text>
               </View>
               <Pressable
-                onPress={() => setSelectedDay(null)}
+                onPress={() => {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  setSelectedDay(null);
+                }}
                 hitSlop={8}
               >
                 <Feather name="x" size={18} color={colors.mutedForeground} />

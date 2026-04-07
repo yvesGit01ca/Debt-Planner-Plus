@@ -12,11 +12,12 @@ interface Props {
   month: number;
   selectedDay?: number | null;
   onSelectDay?: (day: number) => void;
+  hideSummary?: boolean;
 }
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay }: Props) {
+export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay, hideSummary }: Props) {
   const colors = useColors();
   const days = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
@@ -141,72 +142,76 @@ export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay }: P
         })}
       </View>
 
-      <View style={styles.legend}>
-        {debts.map((d) => (
-          <View
-            key={d.id}
-            style={[
-              styles.legendItem,
-              { backgroundColor: colors.card },
-            ]}
-          >
-            <View
-              style={[
-                styles.legendDot,
-                { backgroundColor: d.color },
-              ]}
-            />
-            <Text
-              style={[
-                styles.legendName,
-                { color: colors.mutedForeground },
-              ]}
-            >
-              {d.name}
-            </Text>
-            <Text
-              style={[
-                styles.legendAmount,
-                { color: d.color },
-              ]}
-            >
-              {formatCurrency(d.monthlyPayment, d.currency || "USD")}
-            </Text>
+      {!hideSummary && (
+        <>
+          <View style={styles.legend}>
+            {debts.map((d) => (
+              <View
+                key={d.id}
+                style={[
+                  styles.legendItem,
+                  { backgroundColor: colors.card },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.legendDot,
+                    { backgroundColor: d.color },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.legendName,
+                    { color: colors.mutedForeground },
+                  ]}
+                >
+                  {d.name}
+                </Text>
+                <Text
+                  style={[
+                    styles.legendAmount,
+                    { color: d.color },
+                  ]}
+                >
+                  {formatCurrency(d.monthlyPayment, d.currency || "USD")}
+                </Text>
+              </View>
+            ))}
           </View>
-        ))}
-      </View>
 
-      {(() => {
-        const activeDebts = debts.filter((d) =>
-          isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, month, year),
-        );
-        const totals = groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment);
-        return (
-          <View
-            style={[styles.totalBar, { backgroundColor: colors.card }]}
-          >
-            <Text
-              style={[
-                styles.totalLabel,
-                { color: colors.mutedForeground },
-              ]}
-            >
-              Total due this month
-            </Text>
-            <View style={styles.totalValues}>
-              {totals.length > 0 ? totals.map((t) => (
-                <Text key={t.currency} style={[styles.totalValue, { color: colors.primary }]}>
-                  {formatCurrency(t.total, t.currency)}
+          {(() => {
+            const activeDebts = debts.filter((d) =>
+              isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, month, year),
+            );
+            const totals = groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment);
+            return (
+              <View
+                style={[styles.totalBar, { backgroundColor: colors.card }]}
+              >
+                <Text
+                  style={[
+                    styles.totalLabel,
+                    { color: colors.mutedForeground },
+                  ]}
+                >
+                  Total due this month
                 </Text>
-              )) : (
-                <Text style={[styles.totalValue, { color: colors.primary }]}>
-                  {formatCurrency(0)}
-                </Text>
-              )}
-            </View>
-          </View>
-        );
-      })()}
+                <View style={styles.totalValues}>
+                  {totals.length > 0 ? totals.map((t) => (
+                    <Text key={t.currency} style={[styles.totalValue, { color: colors.primary }]}>
+                      {formatCurrency(t.total, t.currency)}
+                    </Text>
+                  )) : (
+                    <Text style={[styles.totalValue, { color: colors.primary }]}>
+                      {formatCurrency(0)}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            );
+          })()}
+        </>
+      )}
     </View>
   );
 }
