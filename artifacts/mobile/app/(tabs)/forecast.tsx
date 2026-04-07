@@ -47,20 +47,17 @@ export default function ForecastScreen() {
         isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, m, y),
       );
       const obligationTotals = groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment);
-      const dcObligations = obligationTotals.find((t) => t.currency === dc)?.total || 0;
-      const otherObligations = obligationTotals.filter((t) => t.currency !== dc);
-      const net = totalIncome - dcObligations;
+      const dcOnly = obligationTotals.find((t) => t.currency === dc)?.total || 0;
+      const net = totalIncome - dcOnly;
       cumulative += net;
       return {
         month: MONTHS[m],
         year: y,
         income: totalIncome,
-        dcObligations,
-        otherObligations,
         obligationTotals,
         net,
         cumulative,
-        danger: dcObligations > totalIncome && totalIncome > 0,
+        danger: dcOnly > totalIncome && totalIncome > 0,
       };
     });
   }, [debts, totalIncome, dc]);

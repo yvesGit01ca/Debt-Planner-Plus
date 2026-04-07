@@ -18,12 +18,10 @@ export function SummaryCards({
 }: Props) {
   const colors = useColors();
 
-  const monthlyDisplay = monthlyTotals.length > 0
-    ? formatCurrencyTotals(monthlyTotals)
-    : formatCurrency(0);
-  const remainingDisplay = remainingTotals.length > 0
-    ? formatCurrencyTotals(remainingTotals)
-    : formatCurrency(0);
+  const monthlyFormatted = formatCurrencyTotals(monthlyTotals);
+  const monthlyDisplay = monthlyFormatted || formatCurrency(0);
+  const remainingFormatted = formatCurrencyTotals(remainingTotals);
+  const remainingDisplay = remainingFormatted || formatCurrency(0);
 
   const items = [
     {
