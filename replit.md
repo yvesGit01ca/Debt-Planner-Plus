@@ -15,6 +15,22 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
+- **Mobile**: Expo (React Native) with expo-router
+
+## Artifacts
+
+### Debt Calendar (Expo Mobile App)
+- **Path**: `artifacts/mobile/`
+- **Type**: Expo React Native app
+- **Features**: Debt tracking (BNPL + loans), calendar view with payment due dates, payoff simulator with extra contribution calculator, 12-month financial forecast
+- **Data storage**: AsyncStorage (local, no backend)
+- **Theme**: Dark (#0a0a0a) with gold (#e8c547) accents
+- **Tabs**: Overview (dashboard), Calendar, Forecast
+- **Key files**:
+  - `context/DebtContext.tsx` — state management + persistence
+  - `types/debt.ts` — TypeScript types
+  - `utils/calculations.ts` — financial math utilities
+  - `components/` — UI components (DebtCard, CalendarGrid, PayoffSimulator, etc.)
 
 ## Key Commands
 
