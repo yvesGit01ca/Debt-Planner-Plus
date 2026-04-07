@@ -53,8 +53,8 @@ export function MonthOutlook({ debts }: Props) {
                 styles.barFill,
                 {
                   backgroundColor: colors.primary,
-                  width: `${(item.total / maxTotal) * 100}%` as never,
-                },
+                  width: `${(item.total / maxTotal) * 100}%`,
+                } as any,
               ]}
             />
           </View>

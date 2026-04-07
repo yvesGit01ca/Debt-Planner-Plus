@@ -3,7 +3,6 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
-import { DAYS_IN_MONTH } from "@/types/debt";
 import { formatCurrency, isDebtActiveInMonth } from "@/utils/calculations";
 
 interface Props {
@@ -16,7 +15,7 @@ const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 export function CalendarGrid({ debts, year, month }: Props) {
   const colors = useColors();
-  const days = DAYS_IN_MONTH[month];
+  const days = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
 
   const cells: (number | null)[] = [];

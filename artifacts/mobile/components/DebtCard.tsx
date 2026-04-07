@@ -110,8 +110,8 @@ export function DebtCard({ debt, onEdit }: Props) {
               styles.progressFill,
               {
                 backgroundColor: debt.color,
-                width: `${progress}%` as never,
-              },
+                width: `${progress}%`,
+              } as any,
             ]}
           />
         </View>
