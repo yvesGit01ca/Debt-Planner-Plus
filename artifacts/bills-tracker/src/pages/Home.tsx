@@ -18,6 +18,7 @@ export default function Home() {
   
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isListOpen, setIsListOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const [newName, setNewName] = useState('');
   const [newAmount, setNewAmount] = useState('');
@@ -78,6 +79,13 @@ export default function Home() {
   
   const daysInCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const dailyAverage = monthlyTotal / daysInCurrentMonth;
+
+  const selectedDayBills = selectedDate
+    ? bills.filter(
+        b => effectiveDayInMonth(b.dayOfMonth, selectedDate.getFullYear(), selectedDate.getMonth()) === selectedDate.getDate()
+      )
+    : [];
+  const selectedDayTotal = selectedDayBills.reduce((acc, b) => acc + b.amount, 0);
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -226,7 +234,11 @@ export default function Home() {
             return (
               <div 
                 key={date.toString()} 
-                className={`min-h-[120px] p-2 border-r border-b last:border-r-0 hover:bg-muted/10 transition-colors ${
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedDate(date)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedDate(date); } }}
+                className={`min-h-[120px] p-2 border-r border-b last:border-r-0 cursor-pointer hover:bg-muted/10 transition-colors ${
                   isCurrentMonth ? 'bg-card' : 'bg-muted/30 text-muted-foreground'
                 }`}
               >
@@ -289,6 +301,52 @@ export default function Home() {
           <p className="text-3xl font-medium">{formatCurrency(dailyAverage, bills[0]?.currency || 'EUR €')}</p>
         </div>
       </div>
+
+      {/* Day Detail Dialog */}
+      <Dialog open={selectedDate !== null} onOpenChange={(open) => { if (!open) setSelectedDate(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedDate ? format(selectedDate, 'EEEE, MMMM d') : ''}</DialogTitle>
+          </DialogHeader>
+
+          {selectedDayBills.length === 0 ? (
+            <p className="text-muted-foreground text-sm py-6 text-center">No bills due on this day.</p>
+          ) : (
+            <div className="mt-2 space-y-3">
+              {selectedDayBills.map(bill => {
+                const color = getBillColor(bill.id);
+                return (
+                  <div key={bill.id} className="flex items-center justify-between gap-3 p-3 border rounded-md bg-card">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.bg}`} />
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{bill.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {formatCurrency(bill.amount, bill.currency)} • {bill.category}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Due {getOrdinalSuffix(bill.dayOfMonth)} every month</div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteBill(bill.id)}
+                      className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+
+              <div className="flex items-center justify-between pt-3 border-t">
+                <span className="text-sm text-muted-foreground">Total due this day</span>
+                <span className="text-lg font-medium">{formatCurrency(selectedDayTotal, selectedDayBills[0]?.currency || 'EUR €')}</span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
