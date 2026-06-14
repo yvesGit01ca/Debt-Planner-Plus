@@ -17,10 +17,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, getCategoryColor, formatCurrency, getOrdinalSuffix, effectiveDayInMonth, validateBillInput, type BillFieldErrors } from '@/lib/utils';
-import { Plus, List, Trash2, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Wallet, Sun, Moon } from 'lucide-react';
+import { List, Trash2, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek } from 'date-fns';
 
 const EMPTY_FORM = { name: '', amount: '', currency: 'EUR €', category: 'Housing', day: '1' };
+
+const LABEL = 'text-[0.6875rem] font-medium tracking-[0.08em] uppercase text-muted-foreground';
 
 export default function Home() {
   const { bills, addBill, deleteBill, isLoaded } = useBills();
@@ -38,7 +40,7 @@ export default function Home() {
 
   const setField = (key: keyof typeof form, value: string) => {
     setForm((f) => ({ ...f, [key]: value }));
-    setErrors((e) => ({ ...e, [key === 'day' ? 'day' : key]: undefined }));
+    setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
   const resetForm = () => {
@@ -109,13 +111,6 @@ export default function Home() {
     stillDue = monthlyTotal;
   }
 
-  const categoryBreakdown = Object.entries(
-    bills.reduce<Record<string, number>>((acc, b) => {
-      acc[b.category] = (acc[b.category] || 0) + b.amount;
-      return acc;
-    }, {})
-  ).sort((a, b) => b[1] - a[1]);
-
   const selectedDayBills = selectedDate
     ? bills.filter(
         (b) => effectiveDayInMonth(b.dayOfMonth, selectedDate.getFullYear(), selectedDate.getMonth()) === selectedDate.getDate()
@@ -124,324 +119,151 @@ export default function Home() {
   const selectedDayTotal = selectedDayBills.reduce((acc, b) => acc + b.amount, 0);
 
   const atLimit = bills.length >= MAX_BILLS;
+  const billWord = (n: number) => `${n} ${n === 1 ? 'bill' : 'bills'}`;
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6 md:space-y-8">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="max-w-3xl mx-auto px-5 py-8 md:py-10"
+      >
         {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-        >
-          <div className="flex items-center gap-3">
-            <div className="grid place-items-center w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/30">
-              <Wallet className="w-6 h-6" />
-            </div>
+        <header className="space-y-5">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Debt Planner</h1>
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{formatCurrency(monthlyTotal, primaryCurrency)}</span>
-                {' '}across {bills.length} {bills.length === 1 ? 'bill' : 'bills'} this month
+              <h1 className="text-lg font-semibold tracking-[-0.02em] text-foreground leading-tight">Debt Planner</h1>
+              <p className="text-[0.8125rem] text-muted-foreground mt-0.5">
+                {billWord(bills.length)} · {formatCurrency(monthlyTotal, primaryCurrency)}/mo
               </p>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleTheme}
-              className="shrink-0 rounded-full"
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
+            <div className="flex items-center gap-1 -mr-2">
+              <Sheet open={isListOpen} onOpenChange={setIsListOpen}>
+                <SheetTrigger asChild>
+                  <button
+                    className="p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Manage all bills"
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </SheetTrigger>
+                <BillListSheet
+                  bills={bills}
+                  total={formatCurrency(monthlyTotal, primaryCurrency)}
+                  onDelete={handleDelete}
+                />
+              </Sheet>
 
-            <Sheet open={isListOpen} onOpenChange={setIsListOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="shrink-0 rounded-full" aria-label="Manage all bills" title="Manage bills">
-                  <List className="w-4 h-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="w-full sm:max-w-md">
-                <SheetHeader>
-                  <SheetTitle>All bills</SheetTitle>
-                  <SheetDescription>
-                    {bills.length} of {MAX_BILLS} bills · {formatCurrency(monthlyTotal, primaryCurrency)} / month
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6 space-y-3 overflow-y-auto pb-6">
-                  {bills.length === 0 ? (
-                    <p className="text-muted-foreground text-sm">No bills added yet.</p>
-                  ) : (
-                    bills.map((bill, i) => {
-                      const color = getCategoryColor(bill.category);
-                      return (
-                        <motion.div
-                          key={bill.id}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.25, delay: i * 0.03 }}
-                          className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:border-primary/40 transition-colors"
-                        >
-                          <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', color.dot)} />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold truncate">{bill.name}</span>
-                              <span className={cn('text-[10px] uppercase tracking-wide font-medium px-1.5 py-0.5 rounded-md', color.badge)}>
-                                {bill.category}
-                              </span>
-                            </div>
-                            <div className="text-sm text-muted-foreground">Due {getOrdinalSuffix(bill.dayOfMonth)} every month</div>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <div className="font-semibold tabular-nums">{formatCurrency(bill.amount, bill.currency)}</div>
-                          </div>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10" aria-label={`Delete ${bill.name}`}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete {bill.name}?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will permanently remove this bill from your planner. This can't be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(bill.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </motion.div>
-                      );
-                    })
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            <Dialog open={isAddOpen} onOpenChange={(open) => { setIsAddOpen(open); if (!open) resetForm(); }}>
-              <DialogTrigger asChild>
-                <Button className="gap-2 rounded-full shadow-lg shadow-primary/25">
-                  <Plus className="w-4 h-4" />
-                  Add bill
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add a new bill</DialogTitle>
-                  <DialogDescription>Track a recurring monthly payment on your calendar.</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleAddSubmit} className="space-y-4 mt-2" noValidate>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      value={form.name}
-                      maxLength={MAX_NAME_LENGTH}
-                      onChange={(e) => setField('name', e.target.value)}
-                      placeholder="e.g. Rent"
-                      aria-invalid={!!errors.name}
-                      className={cn(errors.name && 'border-destructive focus-visible:ring-destructive')}
-                    />
-                    {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="amount">Amount</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        inputMode="decimal"
-                        value={form.amount}
-                        maxLength={12}
-                        onChange={(e) => setField('amount', e.target.value)}
-                        placeholder="0.00"
-                        aria-invalid={!!errors.amount}
-                        className={cn(errors.amount && 'border-destructive focus-visible:ring-destructive')}
-                      />
-                      {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="currency">Currency</Label>
-                      <Select value={form.currency} onValueChange={(v) => setField('currency', v)}>
-                        <SelectTrigger id="currency" aria-label="Currency"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="day">Day of month</Label>
-                      <Input
-                        id="day"
-                        type="number"
-                        min="1"
-                        max="31"
-                        step="1"
-                        value={form.day}
-                        onChange={(e) => setField('day', e.target.value)}
-                        aria-invalid={!!errors.day}
-                        className={cn(errors.day && 'border-destructive focus-visible:ring-destructive')}
-                      />
-                      {errors.day && <p className="text-xs text-destructive">{errors.day}</p>}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="category">Category</Label>
-                      <Select value={form.category} onValueChange={(v) => setField('category', v)}>
-                        <SelectTrigger id="category" aria-label="Category"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {CATEGORIES.map((c) => (
-                            <SelectItem key={c} value={c}>
-                              <span className="flex items-center gap-2">
-                                <span className={cn('w-2 h-2 rounded-full', getCategoryColor(c).dot)} />
-                                {c}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {atLimit && (
-                    <p className="text-xs text-destructive">You've reached the {MAX_BILLS}-bill limit. Delete a bill to add more.</p>
-                  )}
-
-                  <Button type="submit" className="w-full" disabled={atLimit}>Save bill</Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </motion.header>
-
-        {/* Summary bar */}
-        <motion.section
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.05, ease: 'easeOut' }}
-          className="rounded-2xl border border-border bg-card p-5 md:p-6"
-        >
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-5 md:gap-6">
-            <SummaryStat label="Total bills" value={String(bills.length)} />
-            <SummaryStat label="Monthly cost" value={formatCurrency(monthlyTotal, primaryCurrency)} highlight />
-            <SummaryStat label="Still due this month" value={formatCurrency(stillDue, primaryCurrency)} />
-          </div>
-
-          {categoryBreakdown.length > 0 && (
-            <div className="mt-5 pt-5 border-t border-border">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-3">By category</p>
-              <div className="flex flex-wrap gap-2">
-                {categoryBreakdown.map(([category, amount]) => {
-                  const color = getCategoryColor(category as any);
-                  return (
-                    <span key={category} className={cn('inline-flex items-center gap-2 text-xs font-medium pl-2 pr-2.5 py-1.5 rounded-full', color.badge)}>
-                      <span className={cn('w-2 h-2 rounded-full', color.dot)} />
-                      {category}
-                      <span className="opacity-70">·</span>
-                      <span className="tabular-nums">{formatCurrency(amount, primaryCurrency)}</span>
-                    </span>
-                  );
-                })}
-              </div>
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
             </div>
-          )}
-        </motion.section>
-
-        {/* Calendar controls */}
-        <div className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-card p-2">
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={prevMonth} className="rounded-full" aria-label="Previous month"><ChevronLeft className="w-4 h-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={nextMonth} className="rounded-full" aria-label="Next month"><ChevronRight className="w-4 h-4" /></Button>
-            <span className="font-semibold text-base md:text-lg ml-2 min-w-[120px] md:min-w-[150px]">
-              {format(currentDate, 'MMMM yyyy')}
-            </span>
           </div>
-          <Button variant="outline" size="sm" onClick={goToday} className="gap-2 rounded-full" aria-label="Jump to current month">
-            <CalendarIcon className="w-4 h-4" />
+
+          {/* Add bill */}
+          <Dialog open={isAddOpen} onOpenChange={(open) => { setIsAddOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button className="w-full h-10 rounded-lg font-medium">Add a bill</Button>
+            </DialogTrigger>
+            <AddBillDialog
+              form={form}
+              errors={errors}
+              atLimit={atLimit}
+              onField={setField}
+              onSubmit={handleAddSubmit}
+            />
+          </Dialog>
+        </header>
+
+        {/* Stats */}
+        <section className="grid grid-cols-2 gap-4 mt-8">
+          <div>
+            <p className={LABEL}>Bills</p>
+            <p className="text-[2rem] font-bold tracking-[-0.04em] tabular-nums leading-none mt-1.5">{bills.length}</p>
+          </div>
+          <div className="text-right">
+            <p className={LABEL}>This month</p>
+            <p className="text-[2rem] font-bold tracking-[-0.04em] tabular-nums leading-none mt-1.5">
+              {formatCurrency(monthlyTotal, primaryCurrency)}
+            </p>
+          </div>
+        </section>
+        <p className="text-[0.8125rem] text-muted-foreground mt-3">
+          {formatCurrency(stillDue, primaryCurrency)} still due
+        </p>
+
+        {/* Month navigation */}
+        <div className="flex items-center justify-between mt-10">
+          <div className="flex items-center gap-1">
+            <button onClick={prevMonth} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors" aria-label="Previous month">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-sm font-semibold tracking-[-0.01em] min-w-[120px] text-center">{format(currentDate, 'MMMM yyyy')}</span>
+            <button onClick={nextMonth} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors" aria-label="Next month">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <button onClick={goToday} className="text-xs text-muted-foreground hover:text-foreground transition-colors" aria-label="Jump to current month">
             Today
-          </Button>
+          </button>
         </div>
 
-        {/* Calendar grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
-          className="rounded-2xl border border-border bg-card overflow-hidden"
-        >
-          <div className="grid grid-cols-7 border-b border-border bg-muted/40">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div key={day} className="p-2 md:p-3 text-[11px] md:text-sm font-semibold text-muted-foreground text-center border-r border-border last:border-r-0">
-                <span className="hidden sm:inline">{day}</span>
-                <span className="sm:hidden">{day[0]}</span>
+        {/* Calendar */}
+        <div className="mt-4">
+          <div className="grid grid-cols-7 mb-1">
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+              <div key={i} className="text-center text-[0.6875rem] font-medium tracking-[0.08em] uppercase text-muted-foreground py-2">
+                {day}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 auto-rows-fr">
+          <div className="grid grid-cols-7 gap-1">
             {calendarDays.map((date) => {
               const isCurrentMonth = isSameMonth(date, currentDate);
               const isToday = isSameDay(date, new Date());
+              const isSelected = selectedDate ? isSameDay(date, selectedDate) : false;
               const dayBills = bills.filter(
                 (b) => effectiveDayInMonth(b.dayOfMonth, date.getFullYear(), date.getMonth()) === date.getDate()
               );
 
               return (
-                <div
+                <button
                   key={date.toString()}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`${format(date, 'EEEE, MMMM d')}, ${dayBills.length} ${dayBills.length === 1 ? 'bill' : 'bills'} due`}
+                  type="button"
+                  aria-label={`${format(date, 'EEEE, MMMM d')}, ${billWord(dayBills.length)} due`}
                   onClick={() => setSelectedDate(date)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedDate(date); } }}
                   className={cn(
-                    'group min-h-[80px] sm:min-h-[110px] md:min-h-[120px] p-1.5 md:p-2 border-r border-b border-border last:border-r-0 cursor-pointer outline-none transition-colors',
-                    'hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
-                    isCurrentMonth ? 'bg-card' : 'bg-muted/30 text-muted-foreground'
+                    'group min-h-[52px] sm:min-h-[68px] p-1.5 rounded-lg text-left transition-colors outline-none flex flex-col',
+                    'hover:bg-accent focus-visible:bg-accent focus-visible:ring-1 focus-visible:ring-ring',
+                    isSelected && 'ring-1 ring-foreground/20 bg-accent/60',
+                    !isCurrentMonth && 'opacity-40'
                   )}
                 >
-                  <div className="flex justify-end mb-1">
+                  <div className="flex justify-start mb-1">
                     <span className={cn(
-                      'w-7 h-7 flex items-center justify-center text-xs md:text-sm rounded-full transition-colors',
-                      isToday
-                        ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-semibold shadow-md shadow-indigo-500/30'
-                        : isCurrentMonth ? 'text-foreground group-hover:bg-background/60' : 'text-muted-foreground'
+                      'inline-flex items-center justify-center text-[0.8125rem] font-medium tabular-nums w-6 h-6 rounded-full',
+                      isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'
                     )}>
                       {date.getDate()}
                     </span>
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-0.5 min-w-0">
                     {dayBills.slice(0, 2).map((bill) => {
                       const color = getCategoryColor(bill.category);
                       return (
                         <Tooltip key={bill.id}>
                           <TooltipTrigger asChild>
-                            <div className={cn(
-                              'flex items-center gap-1 text-[10px] md:text-xs px-1.5 py-1 rounded-md truncate cursor-default transition-transform hover:scale-[1.03]',
-                              isCurrentMonth ? color.chip : 'bg-muted text-muted-foreground opacity-60'
-                            )}>
+                            <div className="flex items-center gap-1.5 min-w-0 cursor-default">
                               <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', color.dot)} />
-                              <span className="truncate font-medium">{bill.name}</span>
+                              <span className="truncate text-[0.6875rem] text-foreground/80 leading-tight">{bill.name}</span>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="top">
@@ -455,101 +277,233 @@ export default function Home() {
                       );
                     })}
                     {dayBills.length > 2 && (
-                      <div className="text-[10px] md:text-xs px-1.5 text-muted-foreground font-medium">
-                        +{dayBills.length - 2} more
-                      </div>
+                      <div className="text-[0.6875rem] text-muted-foreground pl-3 leading-tight">+{dayBills.length - 2}</div>
                     )}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
-        </motion.div>
+        </div>
+      </motion.div>
 
-        {/* Day detail dialog */}
-        <Dialog open={selectedDate !== null} onOpenChange={(open) => { if (!open) setSelectedDate(null); }}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{selectedDate ? format(selectedDate, 'EEEE, MMMM d') : ''}</DialogTitle>
-              <DialogDescription>
-                {selectedDayBills.length === 0
-                  ? 'Nothing scheduled.'
-                  : `${selectedDayBills.length} ${selectedDayBills.length === 1 ? 'bill' : 'bills'} due`}
-              </DialogDescription>
-            </DialogHeader>
+      {/* Day detail */}
+      <Sheet open={selectedDate !== null} onOpenChange={(open) => { if (!open) setSelectedDate(null); }}>
+        <SheetContent side="right" className="w-full sm:max-w-sm">
+          <SheetHeader>
+            <SheetTitle className="text-lg font-semibold tracking-[-0.02em]">
+              {selectedDate ? format(selectedDate, 'MMMM d') : ''}
+            </SheetTitle>
+            <SheetDescription className="sr-only">Bills due on the selected day.</SheetDescription>
+          </SheetHeader>
 
-            {selectedDayBills.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-6 text-center">No bills due on this day.</p>
-            ) : (
-              <div className="mt-1 space-y-3">
-                {selectedDayBills.map((bill) => {
-                  const color = getCategoryColor(bill.category);
-                  return (
-                    <div key={bill.id} className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border bg-card">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', color.dot)} />
-                        <div className="min-w-0">
-                          <div className="font-semibold truncate">{bill.name}</div>
-                          <div className="text-sm text-muted-foreground">{formatCurrency(bill.amount, bill.currency)} · {bill.category}</div>
-                          <div className="text-xs text-muted-foreground">Due {getOrdinalSuffix(bill.dayOfMonth)} every month</div>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(bill.id)}
-                        className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        aria-label={`Delete ${bill.name}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  );
-                })}
-
-                <div className="flex items-center justify-between pt-3 border-t border-border">
-                  <span className="text-sm text-muted-foreground">Total due this day</span>
-                  <span className="text-lg font-semibold tabular-nums">{formatCurrency(selectedDayTotal, selectedDayBills[0]?.currency || 'EUR €')}</span>
-                </div>
+          {selectedDayBills.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-16">No bills on this day</p>
+          ) : (
+            <div className="mt-4">
+              <div className="divide-y divide-border">
+                {selectedDayBills.map((bill) => (
+                  <BillRow key={bill.id} bill={bill} onDelete={handleDelete} />
+                ))}
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+              <div className="flex items-center justify-between pt-4 mt-2 border-t border-border">
+                <span className="text-[0.8125rem] text-muted-foreground">Total</span>
+                <span className="text-sm font-semibold tabular-nums">{formatCurrency(selectedDayTotal, selectedDayBills[0]?.currency || 'EUR €')}</span>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
-function SummaryStat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function BillRow({ bill, onDelete }: { bill: import('@/lib/types').Bill; onDelete: (id: string) => void }) {
+  const color = getCategoryColor(bill.category);
   return (
-    <div className="flex flex-col justify-center">
-      <p className="text-xs md:text-sm text-muted-foreground mb-1">{label}</p>
-      <p className={cn('text-2xl md:text-3xl font-bold tracking-tight tabular-nums', highlight && 'text-primary')}>{value}</p>
+    <div className="group flex items-center gap-3 py-3 transition-colors">
+      <span className={cn('w-2 h-2 rounded-full shrink-0', color.dot)} />
+      <div className="min-w-0 flex-1">
+        <div className="text-sm text-foreground truncate">{bill.name}</div>
+        <div className="text-[0.75rem] text-muted-foreground">due the {getOrdinalSuffix(bill.dayOfMonth)}</div>
+      </div>
+      <span className="text-sm font-semibold tabular-nums shrink-0">{formatCurrency(bill.amount, bill.currency)}</span>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <button
+            className="shrink-0 p-1 rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-destructive transition-opacity"
+            aria-label={`Delete ${bill.name}`}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {bill.name}?</AlertDialogTitle>
+            <AlertDialogDescription>This removes the bill from your planner. This can't be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => onDelete(bill.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  );
+}
+
+function BillListSheet({ bills, total, onDelete }: { bills: import('@/lib/types').Bill[]; total: string; onDelete: (id: string) => void }) {
+  return (
+    <SheetContent side="right" className="w-full sm:max-w-sm">
+      <SheetHeader>
+        <SheetTitle className="flex items-center gap-2 text-lg font-semibold tracking-[-0.02em]">
+          All bills
+          <span className="text-sm font-normal text-muted-foreground tabular-nums">{bills.length}</span>
+        </SheetTitle>
+        <SheetDescription className="text-[0.8125rem]">{total} per month</SheetDescription>
+      </SheetHeader>
+      <div className="mt-4 overflow-y-auto pb-6">
+        {bills.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-16 text-center">No bills added yet</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {bills.map((bill) => (
+              <BillRow key={bill.id} bill={bill} onDelete={onDelete} />
+            ))}
+          </div>
+        )}
+      </div>
+    </SheetContent>
+  );
+}
+
+type AddBillDialogProps = {
+  form: typeof EMPTY_FORM;
+  errors: BillFieldErrors;
+  atLimit: boolean;
+  onField: (key: keyof typeof EMPTY_FORM, value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+};
+
+function AddBillDialog({ form, errors, atLimit, onField, onSubmit }: AddBillDialogProps) {
+  const inputBase = 'h-10 bg-input border-border';
+  return (
+    <DialogContent className="sm:max-w-[420px]">
+      <DialogHeader>
+        <DialogTitle className="text-lg font-semibold tracking-[-0.02em]">New bill</DialogTitle>
+        <DialogDescription className="sr-only">Add a recurring monthly bill.</DialogDescription>
+      </DialogHeader>
+      <form onSubmit={onSubmit} className="space-y-5 mt-2" noValidate>
+        <div className="space-y-1.5">
+          <Label htmlFor="name" className={LABEL}>Name</Label>
+          <Input
+            id="name"
+            value={form.name}
+            maxLength={MAX_NAME_LENGTH}
+            onChange={(e) => onField('name', e.target.value)}
+            placeholder="Rent"
+            aria-invalid={!!errors.name}
+            className={cn(inputBase, errors.name && 'border-destructive focus-visible:ring-destructive')}
+          />
+          {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-span-2 space-y-1.5">
+            <Label htmlFor="amount" className={LABEL}>Amount</Label>
+            <Input
+              id="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              inputMode="decimal"
+              value={form.amount}
+              maxLength={12}
+              onChange={(e) => onField('amount', e.target.value)}
+              placeholder="0.00"
+              aria-invalid={!!errors.amount}
+              className={cn(inputBase, errors.amount && 'border-destructive focus-visible:ring-destructive')}
+            />
+            {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="currency" className={LABEL}>Currency</Label>
+            <Select value={form.currency} onValueChange={(v) => onField('currency', v)}>
+              <SelectTrigger id="currency" aria-label="Currency" className={cn(inputBase, 'w-full')}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="day" className={LABEL}>Day of month</Label>
+            <Input
+              id="day"
+              type="number"
+              min="1"
+              max="31"
+              step="1"
+              value={form.day}
+              onChange={(e) => onField('day', e.target.value)}
+              placeholder="1–31"
+              aria-invalid={!!errors.day}
+              className={cn(inputBase, errors.day && 'border-destructive focus-visible:ring-destructive')}
+            />
+            {errors.day && <p className="text-xs text-destructive">{errors.day}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="category" className={LABEL}>Category</Label>
+            <Select value={form.category} onValueChange={(v) => onField('category', v)}>
+              <SelectTrigger id="category" aria-label="Category" className={cn(inputBase, 'w-full')}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    <span className="flex items-center gap-2">
+                      <span className={cn('w-1.5 h-1.5 rounded-full', getCategoryColor(c).dot)} />
+                      {c}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {atLimit && (
+          <p className="text-xs text-destructive">You've reached the {MAX_BILLS}-bill limit. Delete a bill to add more.</p>
+        )}
+
+        <Button type="submit" className="w-full h-11 rounded-lg font-medium" disabled={atLimit}>Save bill</Button>
+      </form>
+    </DialogContent>
   );
 }
 
 function HomeSkeleton() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6 md:space-y-8">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="w-12 h-12 rounded-2xl" />
-            <div className="space-y-2">
-              <Skeleton className="h-7 w-40" />
-              <Skeleton className="h-4 w-52" />
-            </div>
+      <div className="max-w-3xl mx-auto px-5 py-8 md:py-10">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-44" />
           </div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="w-10 h-10 rounded-full" />
-            <Skeleton className="w-10 h-10 rounded-full" />
-            <Skeleton className="w-28 h-10 rounded-full" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-8 w-8 rounded-md" />
           </div>
         </div>
-        <Skeleton className="h-36 w-full rounded-2xl" />
-        <Skeleton className="h-14 w-full rounded-2xl" />
-        <Skeleton className="h-[520px] w-full rounded-2xl" />
+        <Skeleton className="h-10 w-full rounded-lg mt-5" />
+        <div className="grid grid-cols-2 gap-4 mt-8">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+        <Skeleton className="h-[360px] w-full rounded-lg mt-10" />
       </div>
     </div>
   );

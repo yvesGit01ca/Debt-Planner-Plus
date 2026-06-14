@@ -48,83 +48,82 @@
 }
 
 :root {
-  /* Premium indigo / violet palette on clean whites. */
-  --background: 240 30% 99%;        /* near-white with a faint cool tint */
-  --foreground: 222 47% 11%;        /* slate-900 */
+  /* Minimalist neutral palette — zero color tint. */
+  --background: 0 0% 98%;           /* #FAFAFA */
+  --foreground: 0 0% 4%;            /* #0A0A0A */
 
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --card-border: 240 16% 90%;
+  --card: 0 0% 100%;                /* #FFFFFF */
+  --card-foreground: 0 0% 4%;
+  --card-border: 0 0% 90%;          /* #E5E5E5 */
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --popover-border: 240 16% 90%;
+  --popover-foreground: 0 0% 4%;
+  --popover-border: 0 0% 90%;
 
-  --primary: 239 84% 67%;           /* #6366f1 indigo-500 */
-  --primary-foreground: 0 0% 100%;
-  --primary-border: 239 70% 60%;
+  --primary: 240 6% 10%;            /* #18181B */
+  --primary-foreground: 0 0% 100%;  /* #FFFFFF */
+  --primary-border: 240 6% 10%;
 
-  --secondary: 240 24% 96%;
-  --secondary-foreground: 222 47% 18%;
-  --secondary-border: 240 20% 90%;
+  --secondary: 0 0% 96%;            /* #F5F5F5 */
+  --secondary-foreground: 0 0% 4%;
+  --secondary-border: 0 0% 90%;
 
-  --muted: 240 24% 96%;
-  --muted-foreground: 240 8% 46%;
-  --muted-border: 240 20% 90%;
+  --muted: 0 0% 96%;                /* #F5F5F5 */
+  --muted-foreground: 0 0% 45%;     /* #737373 */
+  --muted-border: 0 0% 90%;
 
-  --accent: 243 75% 96%;            /* soft indigo wash */
-  --accent-foreground: 239 60% 40%;
-  --accent-border: 240 30% 88%;
+  --accent: 0 0% 96%;               /* hover wash #F5F5F5 */
+  --accent-foreground: 0 0% 4%;
+  --accent-border: 0 0% 90%;
 
-  --destructive: 0 72% 56%;
+  --destructive: 0 84% 60%;         /* #EF4444 */
   --destructive-foreground: 0 0% 100%;
-  --destructive-border: 0 72% 50%;
+  --destructive-border: 0 84% 55%;
 
-  --border: 240 16% 90%;
-  --input: 240 16% 88%;
-  --ring: 239 84% 67%;
+  --border: 0 0% 90%;               /* #E5E5E5 */
+  --input: 0 0% 96%;                /* #F5F5F5 */
+  --ring: 240 6% 10%;
 
-  --radius: 0.75rem;
+  --radius: 0.625rem;               /* 10px */
 
   --app-font-sans: 'Inter', sans-serif;
 }
 
 .dark {
-  /* Deep slate canvas with the same indigo accent. */
-  --background: 222 47% 7%;         /* deep slate */
-  --foreground: 210 20% 92%;
+  --background: 0 0% 4%;            /* #0A0A0A */
+  --foreground: 0 0% 98%;           /* #FAFAFA */
 
-  --card: 222 40% 11%;
-  --card-foreground: 210 20% 92%;
-  --card-border: 222 26% 18%;
+  --card: 0 0% 7%;                  /* #111111 */
+  --card-foreground: 0 0% 98%;
+  --card-border: 0 0% 13%;          /* #222222 */
 
-  --popover: 222 42% 10%;
-  --popover-foreground: 210 20% 92%;
-  --popover-border: 222 26% 18%;
+  --popover: 0 0% 7%;
+  --popover-foreground: 0 0% 98%;
+  --popover-border: 0 0% 13%;
 
-  --primary: 239 84% 67%;
-  --primary-foreground: 0 0% 100%;
-  --primary-border: 239 70% 60%;
+  --primary: 0 0% 98%;             /* #FAFAFA (inverted) */
+  --primary-foreground: 0 0% 4%;   /* #0A0A0A */
+  --primary-border: 0 0% 98%;
 
-  --secondary: 222 28% 16%;
-  --secondary-foreground: 210 20% 92%;
-  --secondary-border: 222 26% 22%;
+  --secondary: 0 0% 9%;            /* #161616 */
+  --secondary-foreground: 0 0% 98%;
+  --secondary-border: 0 0% 13%;
 
-  --muted: 222 28% 16%;
-  --muted-foreground: 215 16% 62%;
-  --muted-border: 222 26% 22%;
+  --muted: 0 0% 9%;                /* #161616 */
+  --muted-foreground: 0 0% 45%;    /* #737373 */
+  --muted-border: 0 0% 13%;
 
-  --accent: 239 40% 22%;
-  --accent-foreground: 230 80% 88%;
-  --accent-border: 239 35% 30%;
+  --accent: 0 0% 9%;               /* hover wash #161616 */
+  --accent-foreground: 0 0% 98%;
+  --accent-border: 0 0% 13%;
 
-  --destructive: 0 70% 58%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --destructive-border: 0 70% 52%;
+  --destructive-border: 0 84% 55%;
 
-  --border: 222 26% 20%;
-  --input: 222 26% 22%;
-  --ring: 239 84% 67%;
+  --border: 0 0% 13%;              /* #222222 */
+  --input: 0 0% 9%;               /* #161616 */
+  --ring: 0 0% 83%;
 }
 
 @layer base {
@@ -136,5 +135,16 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+  }
+  /* Remove number input spinners for a cleaner fintech feel. */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
   }
 }
