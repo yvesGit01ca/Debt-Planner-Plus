@@ -43,110 +43,96 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
-  /* Soothing, calm palette. Sand/sage vibes. No shadows (flat). */
-  --background: 40 33% 97%; /* #FAF8F5 */
-  --foreground: 20 20% 20%; /* #3D3935 */
-  
-  --card: 0 0% 100%; /* White */
-  --card-foreground: 20 20% 20%;
-  --card-border: 40 20% 90%;
-  
+  /* Premium indigo / violet palette on clean whites. */
+  --background: 240 30% 99%;        /* near-white with a faint cool tint */
+  --foreground: 222 47% 11%;        /* slate-900 */
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --card-border: 240 16% 90%;
+
   --popover: 0 0% 100%;
-  --popover-foreground: 20 20% 20%;
-  --popover-border: 40 20% 90%;
-  
-  --primary: 155 30% 45%; /* Calm green */
+  --popover-foreground: 222 47% 11%;
+  --popover-border: 240 16% 90%;
+
+  --primary: 239 84% 67%;           /* #6366f1 indigo-500 */
   --primary-foreground: 0 0% 100%;
-  --primary-border: 155 30% 40%;
-  
-  --secondary: 40 20% 90%;
-  --secondary-foreground: 20 20% 20%;
-  --secondary-border: 40 20% 85%;
-  
-  --muted: 40 20% 90%;
-  --muted-foreground: 20 10% 40%;
-  --muted-border: 40 20% 85%;
-  
-  --accent: 40 20% 90%;
-  --accent-foreground: 20 20% 20%;
-  --accent-border: 40 20% 85%;
-  
-  --destructive: 0 60% 60%;
+  --primary-border: 239 70% 60%;
+
+  --secondary: 240 24% 96%;
+  --secondary-foreground: 222 47% 18%;
+  --secondary-border: 240 20% 90%;
+
+  --muted: 240 24% 96%;
+  --muted-foreground: 240 8% 46%;
+  --muted-border: 240 20% 90%;
+
+  --accent: 243 75% 96%;            /* soft indigo wash */
+  --accent-foreground: 239 60% 40%;
+  --accent-border: 240 30% 88%;
+
+  --destructive: 0 72% 56%;
   --destructive-foreground: 0 0% 100%;
-  --destructive-border: 0 60% 55%;
-  
-  --border: 40 20% 90%;
-  --input: 40 20% 90%;
-  --ring: 155 30% 45%;
-  
-  --radius: 0.5rem;
-  
-  /* OVERRIDE SHADOWS TO BE FLAT AS PER REQUIREMENTS */
-  --shadow-2xs: none;
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow: none;
-  --shadow-md: none;
-  --shadow-lg: none;
-  --shadow-xl: none;
-  --shadow-2xl: none;
+  --destructive-border: 0 72% 50%;
+
+  --border: 240 16% 90%;
+  --input: 240 16% 88%;
+  --ring: 239 84% 67%;
+
+  --radius: 0.75rem;
 
   --app-font-sans: 'Inter', sans-serif;
 }
 
 .dark {
-  /* Force light mode basically, or provide a flat dark mode */
-  --background: 20 10% 10%;
-  --foreground: 40 20% 90%;
-  
-  --card: 20 10% 15%;
-  --card-foreground: 40 20% 90%;
-  --card-border: 20 10% 20%;
-  
-  --popover: 20 10% 15%;
-  --popover-foreground: 40 20% 90%;
-  --popover-border: 20 10% 20%;
-  
-  --primary: 155 30% 45%;
-  --primary-foreground: 0 0% 100%;
-  --primary-border: 155 30% 40%;
-  
-  --secondary: 20 10% 20%;
-  --secondary-foreground: 40 20% 90%;
-  --secondary-border: 20 10% 25%;
-  
-  --muted: 20 10% 20%;
-  --muted-foreground: 40 10% 60%;
-  --muted-border: 20 10% 25%;
-  
-  --accent: 20 10% 20%;
-  --accent-foreground: 40 20% 90%;
-  --accent-border: 20 10% 25%;
-  
-  --destructive: 0 60% 60%;
-  --destructive-foreground: 0 0% 100%;
-  --destructive-border: 0 60% 55%;
-  
-  --border: 20 10% 20%;
-  --input: 20 10% 20%;
-  --ring: 155 30% 45%;
+  /* Deep slate canvas with the same indigo accent. */
+  --background: 222 47% 7%;         /* deep slate */
+  --foreground: 210 20% 92%;
 
-  --shadow-2xs: none;
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow: none;
-  --shadow-md: none;
-  --shadow-lg: none;
-  --shadow-xl: none;
-  --shadow-2xl: none;
+  --card: 222 40% 11%;
+  --card-foreground: 210 20% 92%;
+  --card-border: 222 26% 18%;
+
+  --popover: 222 42% 10%;
+  --popover-foreground: 210 20% 92%;
+  --popover-border: 222 26% 18%;
+
+  --primary: 239 84% 67%;
+  --primary-foreground: 0 0% 100%;
+  --primary-border: 239 70% 60%;
+
+  --secondary: 222 28% 16%;
+  --secondary-foreground: 210 20% 92%;
+  --secondary-border: 222 26% 22%;
+
+  --muted: 222 28% 16%;
+  --muted-foreground: 215 16% 62%;
+  --muted-border: 222 26% 22%;
+
+  --accent: 239 40% 22%;
+  --accent-foreground: 230 80% 88%;
+  --accent-border: 239 35% 30%;
+
+  --destructive: 0 70% 58%;
+  --destructive-foreground: 0 0% 100%;
+  --destructive-border: 0 70% 52%;
+
+  --border: 222 26% 20%;
+  --input: 222 26% 22%;
+  --ring: 239 84% 67%;
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+  html {
+    color-scheme: light dark;
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
