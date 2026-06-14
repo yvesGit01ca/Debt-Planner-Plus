@@ -90,39 +90,40 @@
 }
 
 .dark {
-  --background: 0 0% 4%;            /* #0A0A0A */
-  --foreground: 0 0% 98%;           /* #FAFAFA */
+  /* Softer charcoal ramp (Linear/Notion-style) — lifted off pure black. */
+  --background: 0 0% 9%;            /* #171717 */
+  --foreground: 0 0% 96%;           /* #F5F5F5 */
 
-  --card: 0 0% 7%;                  /* #111111 */
-  --card-foreground: 0 0% 98%;
-  --card-border: 0 0% 13%;          /* #222222 */
+  --card: 0 0% 12%;                 /* #1E1E1E */
+  --card-foreground: 0 0% 96%;
+  --card-border: 0 0% 18%;          /* #2E2E2E */
 
-  --popover: 0 0% 7%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 0 0% 13%;
+  --popover: 0 0% 13%;              /* #212121 (elevated) */
+  --popover-foreground: 0 0% 96%;
+  --popover-border: 0 0% 20%;       /* #333333 */
 
-  --primary: 0 0% 98%;             /* #FAFAFA (inverted) */
-  --primary-foreground: 0 0% 4%;   /* #0A0A0A */
-  --primary-border: 0 0% 98%;
+  --primary: 0 0% 96%;             /* #F5F5F5 (inverted) */
+  --primary-foreground: 0 0% 9%;   /* #171717 */
+  --primary-border: 0 0% 96%;
 
-  --secondary: 0 0% 9%;            /* #161616 */
-  --secondary-foreground: 0 0% 98%;
-  --secondary-border: 0 0% 13%;
+  --secondary: 0 0% 15%;           /* #262626 */
+  --secondary-foreground: 0 0% 96%;
+  --secondary-border: 0 0% 18%;
 
-  --muted: 0 0% 9%;                /* #161616 */
-  --muted-foreground: 0 0% 45%;    /* #737373 */
-  --muted-border: 0 0% 13%;
+  --muted: 0 0% 15%;               /* #262626 */
+  --muted-foreground: 0 0% 60%;    /* #999999 — brighter for readability */
+  --muted-border: 0 0% 18%;
 
-  --accent: 0 0% 9%;               /* hover wash #161616 */
-  --accent-foreground: 0 0% 98%;
-  --accent-border: 0 0% 13%;
+  --accent: 0 0% 16%;              /* hover wash #292929 */
+  --accent-foreground: 0 0% 96%;
+  --accent-border: 0 0% 20%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 84% 62%;
   --destructive-foreground: 0 0% 100%;
-  --destructive-border: 0 84% 55%;
+  --destructive-border: 0 84% 57%;
 
-  --border: 0 0% 13%;              /* #222222 */
-  --input: 0 0% 9%;               /* #161616 */
+  --border: 0 0% 18%;             /* #2E2E2E */
+  --input: 0 0% 15%;              /* #262626 */
   --ring: 0 0% 83%;
 }
 
