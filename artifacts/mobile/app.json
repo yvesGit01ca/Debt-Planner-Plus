@@ -22,7 +22,7 @@
       }
     },
     "android": {
-      "package": "app.replit.ledger",
+      "package": "com.debtplannerplus.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#191c1f"
