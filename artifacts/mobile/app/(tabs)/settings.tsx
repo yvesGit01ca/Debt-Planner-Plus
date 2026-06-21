@@ -32,7 +32,7 @@ export default function SettingsScreen() {
   const { mode, setMode } = useThemeMode();
   const { profile, updateProfile, clearAllData } = useDebts();
 
-  const dc = profile.defaultCurrency || "USD";
+  const [currency, setCurrency] = useState(profile.defaultCurrency || "USD");
   const [salary, setSalary] = useState(String(profile.monthlySalary || ""));
   const [revenue, setRevenue] = useState(
     String(profile.additionalRevenue || ""),
@@ -88,6 +88,10 @@ export default function SettingsScreen() {
       // so income changed elsewhere (e.g. the Forecast income editor) is
       // reflected here — but never clobber unsaved local edits the user is
       // still working on.
+      // The currency picker saves immediately on selection, so there's never an
+      // unsaved local edit to protect — always pull the latest stored value so a
+      // change made in the Forecast income editor is reflected here.
+      setCurrency(profile.defaultCurrency || "USD");
       if (!incomeDirtyRef.current) {
         setSalary(String(profile.monthlySalary || ""));
         setRevenue(String(profile.additionalRevenue || ""));
@@ -96,10 +100,11 @@ export default function SettingsScreen() {
       return () => {
         autosaveRef.current();
       };
-    }, [profile.monthlySalary, profile.additionalRevenue]),
+    }, [profile.defaultCurrency, profile.monthlySalary, profile.additionalRevenue]),
   );
 
   const handleCurrencyChange = (code: string) => {
+    setCurrency(code);
     updateProfile({ ...profile, defaultCurrency: code });
   };
 
@@ -114,6 +119,7 @@ export default function SettingsScreen() {
           style: "destructive",
           onPress: () => {
             clearAllData();
+            setCurrency("USD");
             setSalary("");
             setRevenue("");
             setTouched(false);
@@ -210,7 +216,7 @@ export default function SettingsScreen() {
           ]}
         >
           <CurrencyPicker
-            selected={dc}
+            selected={currency}
             onSelect={handleCurrencyChange}
             label="Default Currency"
           />
