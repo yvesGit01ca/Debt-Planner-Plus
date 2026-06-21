@@ -78,13 +78,21 @@ export default function SettingsScreen() {
   autosaveRef.current = () => {
     if (incomeDirty) persistIncome(salary, revenue);
   };
+  // A ref lets the focus effect read the current dirty state without listing it
+  // as a dependency (which would re-run the effect on every keystroke).
+  const incomeDirtyRef = useRef(incomeDirty);
+  incomeDirtyRef.current = incomeDirty;
   useFocusEffect(
     useCallback(() => {
-      // Re-sync inputs from the latest stored profile when entering the
-      // screen, discarding any stale local state from a previous visit.
-      setSalary(String(profile.monthlySalary || ""));
-      setRevenue(String(profile.additionalRevenue || ""));
-      setTouched(false);
+      // When the screen regains focus, pull in the latest stored profile values
+      // so income changed elsewhere (e.g. the Forecast income editor) is
+      // reflected here — but never clobber unsaved local edits the user is
+      // still working on.
+      if (!incomeDirtyRef.current) {
+        setSalary(String(profile.monthlySalary || ""));
+        setRevenue(String(profile.additionalRevenue || ""));
+        setTouched(false);
+      }
       return () => {
         autosaveRef.current();
       };
