@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 
 import { DEFAULT_CURRENCY } from "@/constants/currencies";
 import type { Bill } from "@/types/bill";
@@ -15,6 +15,10 @@ import { MAX_BILLS } from "@/types/bill";
 import type { Debt, FinancialProfile } from "@/types/debt";
 import { DEBT_COLORS } from "@/types/debt";
 import { calcMonthlyPayment } from "@/utils/calculations";
+import {
+  configureNotifications,
+  scheduleReminders,
+} from "@/utils/notifications";
 
 const DEBTS_KEY = "@ledger_debts";
 const PROFILE_KEY = "@ledger_profile";
@@ -106,6 +110,8 @@ function migrateProfile(profile: FinancialProfile): FinancialProfile {
   return {
     ...profile,
     defaultCurrency: profile.defaultCurrency || DEFAULT_CURRENCY,
+    notificationsEnabled: profile.notificationsEnabled ?? false,
+    notificationLeadHours: profile.notificationLeadHours === 48 ? 48 : 24,
   };
 }
 
@@ -128,6 +134,8 @@ const DEFAULT_PROFILE: FinancialProfile = {
   monthlySalary: 0,
   additionalRevenue: 0,
   defaultCurrency: DEFAULT_CURRENCY,
+  notificationsEnabled: false,
+  notificationLeadHours: 24,
 };
 
 const DebtContext = createContext<DebtContextType | null>(null);
@@ -229,6 +237,30 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
       }
     })();
   }, []);
+
+  // Configure the notification handler / Android channel once.
+  useEffect(() => {
+    configureNotifications();
+  }, []);
+
+  // Reschedule reminders whenever the data or notification preferences change.
+  // scheduleReminders cancels all pending reminders first, so this stays free of
+  // duplicates. No-op on web and when notifications are disabled.
+  useEffect(() => {
+    if (isLoading) return;
+    void scheduleReminders(debts, bills, profile).catch(() => {});
+  }, [debts, bills, profile, isLoading]);
+
+  // Reschedule when the app returns to the foreground so that, as time passes,
+  // the next month's occurrence is queued up without the user reopening Settings.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active" && !isLoading) {
+        void scheduleReminders(debts, bills, profile).catch(() => {});
+      }
+    });
+    return () => sub.remove();
+  }, [debts, bills, profile, isLoading]);
 
   const persistDebts = useCallback(async (updated: Debt[]) => {
     try {

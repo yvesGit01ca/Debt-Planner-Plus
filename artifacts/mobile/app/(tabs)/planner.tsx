@@ -180,6 +180,7 @@ export default function PlannerScreen() {
 
   const handleSaveProfile = () => {
     updateProfile({
+      ...profile,
       monthlySalary: parseFloat(salary) || 0,
       additionalRevenue: parseFloat(revenue) || 0,
       defaultCurrency: editCurrency,

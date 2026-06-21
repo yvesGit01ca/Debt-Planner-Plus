@@ -18,6 +18,8 @@ export interface FinancialProfile {
   monthlySalary: number;
   additionalRevenue: number;
   defaultCurrency: string;
+  notificationsEnabled: boolean;
+  notificationLeadHours: number; // 24 or 48
 }
 
 export const DEBT_COLORS = [

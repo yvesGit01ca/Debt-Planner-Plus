@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -19,6 +20,12 @@ import { RADII } from "@/constants/colors";
 import { useDebts } from "@/context/DebtContext";
 import { useThemeMode, type ThemeMode } from "@/context/ThemeContext";
 import { useColors } from "@/hooks/useColors";
+import { requestNotificationPermission } from "@/utils/notifications";
+
+const LEAD_OPTIONS: { hours: number; label: string }[] = [
+  { hours: 24, label: "24 hours" },
+  { hours: 48, label: "48 hours" },
+];
 
 const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: keyof typeof Feather.glyphMap }[] = [
   { mode: "light", label: "Light", icon: "sun" },
@@ -106,6 +113,27 @@ export default function SettingsScreen() {
   const handleCurrencyChange = (code: string) => {
     setCurrency(code);
     updateProfile({ ...profile, defaultCurrency: code });
+  };
+
+  const handleToggleNotifications = async (value: boolean) => {
+    if (value) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        Alert.alert(
+          "Notifications are off",
+          "To get payment reminders, enable notifications for Debt Planner Plus in your device settings, then try again.",
+        );
+        return;
+      }
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    updateProfile({ ...profile, notificationsEnabled: value });
+  };
+
+  const handleLeadChange = (hours: number) => {
+    if (hours === profile.notificationLeadHours) return;
+    Haptics.selectionAsync();
+    updateProfile({ ...profile, notificationLeadHours: hours });
   };
 
   const handleReset = () => {
@@ -220,6 +248,84 @@ export default function SettingsScreen() {
             onSelect={handleCurrencyChange}
             label="Default Currency"
           />
+        </View>
+
+        {/* Notifications */}
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>
+          Notifications
+        </Text>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              ...colors.cardShadow,
+            },
+          ]}
+        >
+          <View style={styles.switchRow}>
+            <View style={styles.switchText}>
+              <Text style={[styles.switchTitle, { color: colors.foreground }]}>
+                Payment reminders
+              </Text>
+              <Text
+                style={[styles.switchDesc, { color: colors.mutedForeground }]}
+              >
+                Get reminded before each debt payment and bill is due.
+              </Text>
+            </View>
+            <Switch
+              value={profile.notificationsEnabled}
+              onValueChange={handleToggleNotifications}
+              trackColor={{ false: colors.input, true: colors.primary }}
+              thumbColor="#ffffff"
+              ios_backgroundColor={colors.input}
+            />
+          </View>
+
+          {profile.notificationsEnabled && (
+            <View style={styles.leadBlock}>
+              <Text
+                style={[styles.fieldLabel, { color: colors.mutedForeground }]}
+              >
+                Remind me
+              </Text>
+              <View style={styles.segment}>
+                {LEAD_OPTIONS.map((opt) => {
+                  const active = profile.notificationLeadHours === opt.hours;
+                  return (
+                    <Pressable
+                      key={opt.hours}
+                      onPress={() => handleLeadChange(opt.hours)}
+                      style={[
+                        styles.segmentItem,
+                        {
+                          backgroundColor: active
+                            ? colors.primary
+                            : colors.input,
+                          borderColor: active ? colors.primary : colors.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.segmentText,
+                          {
+                            color: active
+                              ? colors.primaryForeground
+                              : colors.foreground,
+                          },
+                        ]}
+                      >
+                        {opt.label} before
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Income */}
@@ -361,6 +467,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
     marginBottom: 24,
+  },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  switchText: {
+    flex: 1,
+  },
+  switchTitle: {
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+    marginBottom: 2,
+  },
+  switchDesc: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 16,
+  },
+  leadBlock: {
+    marginTop: 16,
   },
   fieldLabel: {
     fontSize: 11,
