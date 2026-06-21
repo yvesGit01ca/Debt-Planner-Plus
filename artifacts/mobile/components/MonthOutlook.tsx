@@ -5,7 +5,15 @@ import {
   Text,
   View,
 } from "react-native";
-import Svg, { Line, Rect } from "react-native-svg";
+import Svg, {
+  Circle,
+  Defs,
+  Line,
+  LinearGradient,
+  Polygon,
+  Polyline,
+  Stop,
+} from "react-native-svg";
 
 import { RADII } from "@/constants/colors";
 import { useColors } from "@/hooks/useColors";
@@ -26,8 +34,9 @@ interface Props {
 }
 
 const CHART_HEIGHT = 140;
-const BAR_RADIUS = 4;
-const BAR_GAP = 12;
+const PAD_X = 6;
+const PAD_TOP = 14;
+const PAD_BOTTOM = 6;
 
 export function MonthOutlook({ debts, bills }: Props) {
   const colors = useColors();
@@ -61,8 +70,24 @@ export function MonthOutlook({ debts, bills }: Props) {
   };
 
   const count = monthData.length;
-  const barWidth =
-    width > 0 ? (width - BAR_GAP * (count - 1)) / count : 0;
+  const innerW = Math.max(width - PAD_X * 2, 0);
+  const plotH = CHART_HEIGHT - PAD_TOP - PAD_BOTTOM;
+  const step = count > 1 ? innerW / (count - 1) : 0;
+
+  const points = monthData.map((item, i) => {
+    const x = PAD_X + step * i;
+    const ratio = maxTotal > 0 ? item.rawTotal / maxTotal : 0;
+    const y = PAD_TOP + (1 - ratio) * plotH;
+    return { x, y, item };
+  });
+
+  const linePoints = points.map((p) => `${p.x},${p.y}`).join(" ");
+  const areaPoints =
+    points.length > 0
+      ? `${PAD_X},${CHART_HEIGHT - PAD_BOTTOM} ${linePoints} ${
+          PAD_X + step * (count - 1)
+        },${CHART_HEIGHT - PAD_BOTTOM}`
+      : "";
 
   return (
     <View style={styles.container}>
@@ -73,33 +98,46 @@ export function MonthOutlook({ debts, bills }: Props) {
       <View style={styles.chart} onLayout={onLayout}>
         {width > 0 && (
           <Svg width={width} height={CHART_HEIGHT}>
+            <Defs>
+              <LinearGradient id="outlookArea" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={colors.primary} stopOpacity={0.22} />
+                <Stop offset="1" stopColor={colors.primary} stopOpacity={0} />
+              </LinearGradient>
+            </Defs>
+
             <Line
               x1={0}
-              y1={CHART_HEIGHT - 0.5}
+              y1={CHART_HEIGHT - PAD_BOTTOM}
               x2={width}
-              y2={CHART_HEIGHT - 0.5}
+              y2={CHART_HEIGHT - PAD_BOTTOM}
               stroke={colors.border}
               strokeWidth={1}
             />
-            {monthData.map((item, i) => {
-              const h =
-                item.rawTotal > 0
-                  ? Math.max((item.rawTotal / maxTotal) * CHART_HEIGHT, 3)
-                  : 0;
-              const x = i * (barWidth + BAR_GAP);
-              const y = CHART_HEIGHT - h;
-              return (
-                <Rect
-                  key={i}
-                  x={x}
-                  y={y}
-                  width={barWidth}
-                  height={h}
-                  rx={BAR_RADIUS}
-                  fill={item.rawTotal > 0 ? colors.primary : colors.muted}
-                />
-              );
-            })}
+
+            {areaPoints !== "" && (
+              <Polygon points={areaPoints} fill="url(#outlookArea)" />
+            )}
+
+            <Polyline
+              points={linePoints}
+              fill="none"
+              stroke={colors.primary}
+              strokeWidth={2.5}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+
+            {points.map((p, i) => (
+              <Circle
+                key={i}
+                cx={p.x}
+                cy={p.y}
+                r={4}
+                fill={colors.card}
+                stroke={colors.primary}
+                strokeWidth={2.5}
+              />
+            ))}
           </Svg>
         )}
       </View>
@@ -156,7 +194,7 @@ const styles = StyleSheet.create({
   },
   labelRow: {
     flexDirection: "row",
-    gap: BAR_GAP,
+    gap: 12,
     marginTop: 8,
   },
   labelCol: {

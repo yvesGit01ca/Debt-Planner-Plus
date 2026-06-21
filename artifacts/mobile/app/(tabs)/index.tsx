@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BillsPieChart } from "@/components/BillsPieChart";
 import { DebtCard } from "@/components/DebtCard";
 import { MonthOutlook } from "@/components/MonthOutlook";
 import { SummaryCards } from "@/components/SummaryCards";
@@ -213,41 +214,52 @@ export default function DashboardScreen() {
                 },
               ]}
             >
-              {monthBills.map((b, i) => (
-                <Pressable
-                  key={b.id}
-                  onPress={() =>
-                    router.push(`/add-bill?editId=${b.id}`)
-                  }
-                  style={[
-                    styles.billRow,
-                    i < monthBills.length - 1 && {
-                      borderBottomWidth: 1,
-                      borderBottomColor: colors.border,
-                    },
-                  ]}
-                >
-                  <View
+              <BillsPieChart bills={monthBills} />
+              <Text style={[styles.pieHint, { color: colors.mutedForeground }]}>
+                Pinch to zoom · double-tap to reset
+              </Text>
+              <View style={styles.legend}>
+                {monthBills.map((b, i) => (
+                  <Pressable
+                    key={b.id}
+                    onPress={() => router.push(`/add-bill?editId=${b.id}`)}
                     style={[
-                      styles.billDot,
-                      { backgroundColor: getCategoryColor(b.category) },
+                      styles.billRow,
+                      i < monthBills.length - 1 && {
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.border,
+                      },
                     ]}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.billName, { color: colors.foreground }]}>
-                      {b.name}
-                    </Text>
+                  >
+                    <View
+                      style={[
+                        styles.billDot,
+                        { backgroundColor: getCategoryColor(b.category) },
+                      ]}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={[styles.billName, { color: colors.foreground }]}
+                      >
+                        {b.name}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.billMeta,
+                          { color: colors.mutedForeground },
+                        ]}
+                      >
+                        {b.category} · {getOrdinalSuffix(b.dayOfMonth)}
+                      </Text>
+                    </View>
                     <Text
-                      style={[styles.billMeta, { color: colors.mutedForeground }]}
+                      style={[styles.billAmount, { color: colors.foreground }]}
                     >
-                      {b.category} · {getOrdinalSuffix(b.dayOfMonth)}
+                      {formatCurrency(b.amount, b.currency)}
                     </Text>
-                  </View>
-                  <Text style={[styles.billAmount, { color: colors.foreground }]}>
-                    {formatCurrency(b.amount, b.currency)}
-                  </Text>
-                </Pressable>
-              ))}
+                  </Pressable>
+                ))}
+              </View>
             </View>
           </View>
         )}
@@ -338,6 +350,17 @@ const styles = StyleSheet.create({
     borderRadius: RADII.lg,
     borderWidth: 1,
     paddingHorizontal: 14,
+    paddingTop: 8,
+  },
+  pieHint: {
+    fontSize: 11,
+    textAlign: "center",
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
+    marginBottom: 4,
+  },
+  legend: {
+    marginTop: 4,
   },
   billRow: {
     flexDirection: "row",
