@@ -1,1 +1,2 @@
 - [Expo dual tab layouts](expo-dual-tab-layouts.md) — adding a tab requires editing BOTH NativeTabs and Classic Tabs in (tabs)/_layout.tsx, or some platforms silently lose it.
+- [xmldom override breaks Expo prebuild](xmldom-expo-prebuild-conflict.md) — pin @xmldom/xmldom to 0.8.x (not 0.9.x) in pnpm overrides; 0.9.x throws "mimeType undefined" in expo prebuild.
