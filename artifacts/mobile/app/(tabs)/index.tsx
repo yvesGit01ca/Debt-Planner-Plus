@@ -192,7 +192,7 @@ export default function DashboardScreen() {
               >
                 Recurring Bills
               </Text>
-              <Pressable onPress={() => router.push("/bills")} hitSlop={8}>
+              <Pressable onPress={() => router.push("/planner")} hitSlop={8}>
                 <Text style={[styles.manageLink, { color: colors.primary }]}>
                   Manage
                 </Text>
