@@ -46,7 +46,7 @@ export function MonthOutlook({ debts, bills }: Props) {
   const billTotals = groupBillTotalsByCurrency(bills);
   const billRaw = bills.reduce((s, b) => s + b.amount, 0);
 
-  const monthData = Array.from({ length: 6 }, (_, i) => {
+  const monthData = Array.from({ length: 3 }, (_, i) => {
     let m = now.getMonth() + i;
     let y = now.getFullYear();
     if (m > 11) {
@@ -92,7 +92,7 @@ export function MonthOutlook({ debts, bills }: Props) {
   return (
     <View style={styles.container}>
       <Text style={[styles.title, { color: colors.mutedForeground }]}>
-        6-Month Outlook
+        3-Month Outlook
       </Text>
 
       <View style={styles.chart} onLayout={onLayout}>
