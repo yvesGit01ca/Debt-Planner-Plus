@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import Slider from "@react-native-community/slider";
 
+import { RADII } from "@/constants/colors";
 import { getCurrencySymbol } from "@/constants/currencies";
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
@@ -140,7 +141,7 @@ export function PayoffSimulator({ debt }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 20,
+    borderRadius: RADII.lg,
     padding: 16,
     marginTop: 16,
   },
@@ -165,7 +166,7 @@ const styles = StyleSheet.create({
   },
   input: {
     width: 70,
-    borderRadius: 12,
+    borderRadius: RADII.md,
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 6,
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: "47%",
-    borderRadius: 12,
+    borderRadius: RADII.md,
     padding: 10,
   },
   statLabel: {

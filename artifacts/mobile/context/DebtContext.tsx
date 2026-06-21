@@ -10,12 +10,15 @@ import React, {
 import { Platform } from "react-native";
 
 import { DEFAULT_CURRENCY } from "@/constants/currencies";
+import type { Bill } from "@/types/bill";
+import { MAX_BILLS } from "@/types/bill";
 import type { Debt, FinancialProfile } from "@/types/debt";
 import { DEBT_COLORS } from "@/types/debt";
 import { calcMonthlyPayment } from "@/utils/calculations";
 
 const DEBTS_KEY = "@ledger_debts";
 const PROFILE_KEY = "@ledger_profile";
+const BILLS_KEY = "@ledger_bills";
 const SECURE_STORE_MAX = 2048;
 
 async function clearStaleChunks(key: string, keepCount: number): Promise<void> {
@@ -76,6 +79,7 @@ async function migrateFromAsyncStorage(): Promise<void> {
   try {
     const debts = await AsyncStorage.getItem(DEBTS_KEY);
     const profile = await AsyncStorage.getItem(PROFILE_KEY);
+    const bills = await AsyncStorage.getItem(BILLS_KEY);
     if (debts) {
       await secureSetItem(DEBTS_KEY, debts);
       await AsyncStorage.removeItem(DEBTS_KEY);
@@ -83,6 +87,10 @@ async function migrateFromAsyncStorage(): Promise<void> {
     if (profile) {
       await secureSetItem(PROFILE_KEY, profile);
       await AsyncStorage.removeItem(PROFILE_KEY);
+    }
+    if (bills) {
+      await secureSetItem(BILLS_KEY, bills);
+      await AsyncStorage.removeItem(BILLS_KEY);
     }
   } catch {}
 }
@@ -103,10 +111,14 @@ function migrateProfile(profile: FinancialProfile): FinancialProfile {
 
 interface DebtContextType {
   debts: Debt[];
+  bills: Bill[];
   profile: FinancialProfile;
   addDebt: (debt: Omit<Debt, "id" | "color" | "monthlyPayment">) => void;
   updateDebt: (debt: Debt) => void;
   deleteDebt: (id: string) => void;
+  addBill: (bill: Omit<Bill, "id">) => boolean;
+  updateBill: (bill: Bill) => void;
+  deleteBill: (id: string) => void;
   updateProfile: (profile: FinancialProfile) => void;
   isLoading: boolean;
 }
@@ -161,8 +173,22 @@ const SAMPLE_DEBTS: Debt[] = [
   },
 ];
 
+const SAMPLE_BILLS: Bill[] = [
+  { id: "b1", name: "Rent", amount: 850, currency: "EUR", dayOfMonth: 1, category: "Housing" },
+  { id: "b2", name: "Netflix", amount: 17.99, currency: "EUR", dayOfMonth: 5, category: "Streaming" },
+  { id: "b3", name: "Electricity", amount: 65, currency: "EUR", dayOfMonth: 10, category: "Utilities" },
+  { id: "b4", name: "Spotify", amount: 10.99, currency: "EUR", dayOfMonth: 12, category: "Streaming" },
+  { id: "b5", name: "Phone", amount: 19.99, currency: "EUR", dayOfMonth: 20, category: "Phone" },
+  { id: "b6", name: "Health insurance", amount: 120, currency: "EUR", dayOfMonth: 25, category: "Insurance" },
+];
+
+function generateId(): string {
+  return Date.now().toString() + Math.random().toString(36).slice(2, 11);
+}
+
 export function DebtProvider({ children }: { children: React.ReactNode }) {
   const [debts, setDebts] = useState<Debt[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
   const [profile, setProfile] = useState<FinancialProfile>({
     monthlySalary: 0,
     additionalRevenue: 0,
@@ -176,6 +202,7 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
         await migrateFromAsyncStorage();
         const stored = await secureGetItem(DEBTS_KEY);
         const storedProfile = await secureGetItem(PROFILE_KEY);
+        const storedBills = await secureGetItem(BILLS_KEY);
         if (stored) {
           setDebts(migrateDebts(JSON.parse(stored)));
         } else {
@@ -185,17 +212,30 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
         if (storedProfile) {
           setProfile(migrateProfile(JSON.parse(storedProfile)));
         }
+        if (storedBills) {
+          setBills(JSON.parse(storedBills));
+        } else {
+          setBills(SAMPLE_BILLS);
+          await secureSetItem(BILLS_KEY, JSON.stringify(SAMPLE_BILLS));
+        }
       } catch {
         setDebts(SAMPLE_DEBTS);
+        setBills(SAMPLE_BILLS);
       } finally {
         setIsLoading(false);
       }
     })();
   }, []);
 
-  const persist = useCallback(async (updated: Debt[]) => {
+  const persistDebts = useCallback(async (updated: Debt[]) => {
     try {
       await secureSetItem(DEBTS_KEY, JSON.stringify(updated));
+    } catch {}
+  }, []);
+
+  const persistBills = useCallback(async (updated: Bill[]) => {
+    try {
+      await secureSetItem(BILLS_KEY, JSON.stringify(updated));
     } catch {}
   }, []);
 
@@ -211,17 +251,15 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
             );
       const newDebt: Debt = {
         ...input,
-        id:
-          Date.now().toString() +
-          Math.random().toString(36).substr(2, 9),
+        id: generateId(),
         color: DEBT_COLORS[debts.length % DEBT_COLORS.length],
         monthlyPayment,
       };
       const updated = [...debts, newDebt];
       setDebts(updated);
-      persist(updated);
+      persistDebts(updated);
     },
-    [debts, persist],
+    [debts, persistDebts],
   );
 
   const updateDebt = useCallback(
@@ -238,36 +276,67 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
         d.id === debt.id ? { ...debt, monthlyPayment } : d,
       );
       setDebts(updated);
-      persist(updated);
+      persistDebts(updated);
     },
-    [debts, persist],
+    [debts, persistDebts],
   );
 
   const deleteDebt = useCallback(
     (id: string) => {
       const updated = debts.filter((d) => d.id !== id);
       setDebts(updated);
-      persist(updated);
+      persistDebts(updated);
     },
-    [debts, persist],
+    [debts, persistDebts],
   );
 
-  const updateProfile = useCallback(
-    (p: FinancialProfile) => {
-      setProfile(p);
-      secureSetItem(PROFILE_KEY, JSON.stringify(p)).catch(() => {});
+  const addBill = useCallback(
+    (input: Omit<Bill, "id">): boolean => {
+      if (bills.length >= MAX_BILLS) return false;
+      const newBill: Bill = { ...input, id: generateId() };
+      const updated = [...bills, newBill];
+      setBills(updated);
+      persistBills(updated);
+      return true;
     },
-    [],
+    [bills, persistBills],
   );
+
+  const updateBill = useCallback(
+    (bill: Bill) => {
+      const updated = bills.map((b) => (b.id === bill.id ? bill : b));
+      setBills(updated);
+      persistBills(updated);
+    },
+    [bills, persistBills],
+  );
+
+  const deleteBill = useCallback(
+    (id: string) => {
+      const updated = bills.filter((b) => b.id !== id);
+      setBills(updated);
+      persistBills(updated);
+    },
+    [bills, persistBills],
+  );
+
+  const updateProfile = useCallback((p: FinancialProfile) => {
+    setProfile(p);
+    secureSetItem(PROFILE_KEY, JSON.stringify(p)).catch(() => {});
+  }, []);
 
   return (
     <DebtContext.Provider
       value={{
         debts,
+        bills,
         profile,
         addDebt,
         updateDebt,
         deleteDebt,
+        addBill,
+        updateBill,
+        deleteBill,
         updateProfile,
         isLoading,
       }}

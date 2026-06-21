@@ -12,26 +12,37 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CurrencyPicker } from "@/components/CurrencyPicker";
+import { RADII } from "@/constants/colors";
 import { useDebts } from "@/context/DebtContext";
 import { useColors } from "@/hooks/useColors";
 import { MONTHS } from "@/types/debt";
-import { formatCurrency, groupTotalsByCurrency, isDebtActiveInMonth } from "@/utils/calculations";
+import {
+  combineTotals,
+  formatCurrency,
+  groupBillTotalsByCurrency,
+  groupTotalsByCurrency,
+  isDebtActiveInMonth,
+} from "@/utils/calculations";
 
 export default function ForecastScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { debts, profile, updateProfile } = useDebts();
+  const { debts, bills, profile, updateProfile } = useDebts();
   const [editing, setEditing] = useState(false);
   const [salary, setSalary] = useState(String(profile.monthlySalary || ""));
   const [revenue, setRevenue] = useState(
     String(profile.additionalRevenue || ""),
   );
-  const [editCurrency, setEditCurrency] = useState(profile.defaultCurrency || "USD");
+  const [editCurrency, setEditCurrency] = useState(
+    profile.defaultCurrency || "USD",
+  );
 
   const dc = profile.defaultCurrency || "USD";
 
   const totalIncome =
     (profile.monthlySalary || 0) + (profile.additionalRevenue || 0);
+
+  const billTotals = useMemo(() => groupBillTotalsByCurrency(bills), [bills]);
 
   const forecast = useMemo(() => {
     const now = new Date();
@@ -46,7 +57,10 @@ export default function ForecastScreen() {
       const activeDebts = debts.filter((d) =>
         isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, m, y),
       );
-      const obligationTotals = groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment);
+      const obligationTotals = combineTotals(
+        groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment),
+        billTotals,
+      );
       const dcOnly = obligationTotals.find((t) => t.currency === dc)?.total || 0;
       const net = totalIncome - dcOnly;
       cumulative += net;
@@ -60,7 +74,7 @@ export default function ForecastScreen() {
         danger: dcOnly > totalIncome && totalIncome > 0,
       };
     });
-  }, [debts, totalIncome, dc]);
+  }, [debts, billTotals, totalIncome, dc]);
 
   const handleSaveProfile = () => {
     updateProfile({
@@ -83,17 +97,13 @@ export default function ForecastScreen() {
   };
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         contentContainerStyle={[
           styles.content,
           {
-            paddingTop:
-              Platform.OS === "web" ? 67 + 16 : insets.top + 16,
-            paddingBottom:
-              Platform.OS === "web" ? 34 + 80 : insets.bottom + 90,
+            paddingTop: Platform.OS === "web" ? 67 + 16 : insets.top + 16,
+            paddingBottom: Platform.OS === "web" ? 34 + 80 : insets.bottom + 90,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -103,18 +113,24 @@ export default function ForecastScreen() {
         </Text>
 
         <View
-          style={[styles.incomeCard, { backgroundColor: colors.card }]}
+          style={[
+            styles.incomeCard,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              ...colors.cardShadow,
+            },
+          ]}
         >
           <View style={styles.incomeHeader}>
-            <Text
-              style={[
-                styles.incomeTitle,
-                { color: colors.mutedForeground },
-              ]}
-            >
+            <Text style={[styles.incomeTitle, { color: colors.mutedForeground }]}>
               Monthly Income
             </Text>
-            <Pressable onPress={() => editing ? handleCancelEditing() : handleStartEditing()}>
+            <Pressable
+              onPress={() =>
+                editing ? handleCancelEditing() : handleStartEditing()
+              }
+            >
               <Feather
                 name={editing ? "x" : "edit-2"}
                 size={16}
@@ -131,12 +147,7 @@ export default function ForecastScreen() {
                 label="Default Currency"
               />
               <View style={styles.incomeField}>
-                <Text
-                  style={[
-                    styles.fieldLabel,
-                    { color: colors.mutedForeground },
-                  ]}
-                >
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>
                   Salary
                 </Text>
                 <TextInput
@@ -153,16 +164,11 @@ export default function ForecastScreen() {
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor={colors.mutedForeground}
-                  keyboardAppearance="dark"
+                  keyboardAppearance={colors.scheme}
                 />
               </View>
               <View style={styles.incomeField}>
-                <Text
-                  style={[
-                    styles.fieldLabel,
-                    { color: colors.mutedForeground },
-                  ]}
-                >
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>
                   Other Revenue
                 </Text>
                 <TextInput
@@ -179,15 +185,12 @@ export default function ForecastScreen() {
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor={colors.mutedForeground}
-                  keyboardAppearance="dark"
+                  keyboardAppearance={colors.scheme}
                 />
               </View>
               <Pressable
                 onPress={handleSaveProfile}
-                style={[
-                  styles.saveIncomeBtn,
-                  { backgroundColor: colors.primary },
-                ]}
+                style={[styles.saveIncomeBtn, { backgroundColor: colors.primary }]}
               >
                 <Text
                   style={[
@@ -202,63 +205,31 @@ export default function ForecastScreen() {
           ) : (
             <View style={styles.incomeDisplay}>
               <View style={styles.incomeRow}>
-                <Text
-                  style={[
-                    styles.incomeLabel,
-                    { color: colors.mutedForeground },
-                  ]}
-                >
+                <Text style={[styles.incomeLabel, { color: colors.mutedForeground }]}>
                   Salary
                 </Text>
-                <Text
-                  style={[
-                    styles.incomeValue,
-                    { color: colors.foreground },
-                  ]}
-                >
+                <Text style={[styles.incomeValue, { color: colors.foreground }]}>
                   {profile.monthlySalary
                     ? formatCurrency(profile.monthlySalary, dc)
                     : "Not set"}
                 </Text>
               </View>
               <View style={styles.incomeRow}>
-                <Text
-                  style={[
-                    styles.incomeLabel,
-                    { color: colors.mutedForeground },
-                  ]}
-                >
+                <Text style={[styles.incomeLabel, { color: colors.mutedForeground }]}>
                   Other Revenue
                 </Text>
-                <Text
-                  style={[
-                    styles.incomeValue,
-                    { color: colors.foreground },
-                  ]}
-                >
+                <Text style={[styles.incomeValue, { color: colors.foreground }]}>
                   {profile.additionalRevenue
                     ? formatCurrency(profile.additionalRevenue, dc)
                     : "Not set"}
                 </Text>
               </View>
-              <View
-                style={[styles.divider, { backgroundColor: colors.border }]}
-              />
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
               <View style={styles.incomeRow}>
-                <Text
-                  style={[
-                    styles.incomeLabel,
-                    { color: colors.foreground },
-                  ]}
-                >
+                <Text style={[styles.incomeLabel, { color: colors.foreground }]}>
                   Total
                 </Text>
-                <Text
-                  style={[
-                    styles.incomeTotalValue,
-                    { color: colors.primary },
-                  ]}
-                >
+                <Text style={[styles.incomeTotalValue, { color: colors.primary }]}>
                   {formatCurrency(totalIncome, dc)}
                 </Text>
               </View>
@@ -268,12 +239,7 @@ export default function ForecastScreen() {
 
         {totalIncome > 0 ? (
           <View>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: colors.mutedForeground },
-              ]}
-            >
+            <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>
               12-Month Projection
             </Text>
 
@@ -284,79 +250,65 @@ export default function ForecastScreen() {
                   styles.forecastRow,
                   {
                     backgroundColor: row.danger
-                      ? "rgba(226,59,74,0.08)"
+                      ? colors.destructiveSoft
                       : colors.card,
                     borderColor: row.danger
-                      ? "rgba(226,59,74,0.3)"
+                      ? colors.destructive + "55"
                       : colors.border,
+                    ...colors.cardShadow,
                   },
                 ]}
               >
                 <View style={styles.forecastHeader}>
-                  <Text
-                    style={[
-                      styles.forecastMonth,
-                      { color: colors.foreground },
-                    ]}
-                  >
+                  <Text style={[styles.forecastMonth, { color: colors.foreground }]}>
                     {row.month} {row.year}
                   </Text>
                   {row.danger && (
-                    <View style={[styles.dangerBadge, { backgroundColor: "rgba(226,59,74,0.15)" }]}>
+                    <View
+                      style={[
+                        styles.dangerBadge,
+                        { backgroundColor: colors.destructiveSoft },
+                      ]}
+                    >
                       <Feather
                         name="alert-triangle"
                         size={10}
                         color={colors.destructive}
                       />
-                      <Text style={[styles.dangerText, { color: colors.destructive }]}>At Risk</Text>
+                      <Text style={[styles.dangerText, { color: colors.destructive }]}>
+                        At Risk
+                      </Text>
                     </View>
                   )}
                 </View>
                 <View style={styles.forecastDetails}>
                   <View style={styles.forecastItem}>
                     <Text
-                      style={[
-                        styles.forecastLabel,
-                        { color: colors.mutedForeground },
-                      ]}
+                      style={[styles.forecastLabel, { color: colors.mutedForeground }]}
                     >
                       Income
                     </Text>
-                    <Text
-                      style={[
-                        styles.forecastValue,
-                        { color: colors.accent },
-                      ]}
-                    >
+                    <Text style={[styles.forecastValue, { color: colors.accent }]}>
                       {formatCurrency(row.income, dc)}
                     </Text>
                   </View>
                   <View style={styles.forecastItem}>
                     <Text
-                      style={[
-                        styles.forecastLabel,
-                        { color: colors.mutedForeground },
-                      ]}
+                      style={[styles.forecastLabel, { color: colors.mutedForeground }]}
                     >
                       Obligations
                     </Text>
                     {row.obligationTotals.map((t) => (
                       <Text
                         key={t.currency}
-                        style={[
-                          styles.forecastValue,
-                          { color: colors.destructive },
-                        ]}
+                        style={[styles.forecastValue, { color: colors.destructive }]}
                       >
                         {formatCurrency(t.total, t.currency)}
                       </Text>
                     ))}
                     {row.obligationTotals.length === 0 && (
                       <Text
-                        style={[
-                          styles.forecastValue,
-                          { color: colors.destructive },
-                        ]}
+                        style={[styles.forecastValue, { color: colors.destructive }]}
                       >
                         {formatCurrency(0, dc)}
                       </Text>
@@ -364,10 +316,7 @@ export default function ForecastScreen() {
                   </View>
                   <View style={styles.forecastItem}>
                     <Text
-                      style={[
-                        styles.forecastLabel,
-                        { color: colors.mutedForeground },
-                      ]}
+                      style={[styles.forecastLabel, { color: colors.mutedForeground }]}
                     >
                       Net ({dc})
                     </Text>
@@ -375,10 +324,7 @@ export default function ForecastScreen() {
                       style={[
                         styles.forecastValue,
                         {
-                          color:
-                            row.net >= 0
-                              ? colors.accent
-                              : colors.destructive,
+                          color: row.net >= 0 ? colors.accent : colors.destructive,
                         },
                       ]}
                     >
@@ -387,10 +333,7 @@ export default function ForecastScreen() {
                   </View>
                   <View style={styles.forecastItem}>
                     <Text
-                      style={[
-                        styles.forecastLabel,
-                        { color: colors.mutedForeground },
-                      ]}
+                      style={[styles.forecastLabel, { color: colors.mutedForeground }]}
                     >
                       Cumulative ({dc})
                     </Text>
@@ -414,19 +357,9 @@ export default function ForecastScreen() {
           </View>
         ) : (
           <View style={styles.noIncome}>
-            <Feather
-              name="dollar-sign"
-              size={32}
-              color={colors.mutedForeground}
-            />
-            <Text
-              style={[
-                styles.noIncomeText,
-                { color: colors.mutedForeground },
-              ]}
-            >
-              Enter your monthly income above to see your financial
-              forecast
+            <Feather name="dollar-sign" size={32} color={colors.mutedForeground} />
+            <Text style={[styles.noIncomeText, { color: colors.mutedForeground }]}>
+              Enter your monthly income above to see your financial forecast
             </Text>
           </View>
         )}
@@ -449,7 +382,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   incomeCard: {
-    borderRadius: 20,
+    borderRadius: RADII.lg,
+    borderWidth: 1,
     padding: 16,
     marginBottom: 24,
   },
@@ -476,17 +410,18 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   input: {
-    borderRadius: 12,
+    borderRadius: RADII.md,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === "ios" ? 12 : 10,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
     letterSpacing: 0.24,
+    fontVariant: ["tabular-nums"],
   },
   saveIncomeBtn: {
     alignItems: "center",
-    borderRadius: 9999,
+    borderRadius: RADII.md,
     paddingVertical: 14,
     paddingHorizontal: 32,
     marginTop: 4,
@@ -511,6 +446,7 @@ const styles = StyleSheet.create({
   incomeValue: {
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
+    fontVariant: ["tabular-nums"],
   },
   divider: {
     height: 1,
@@ -519,6 +455,7 @@ const styles = StyleSheet.create({
   incomeTotalValue: {
     fontSize: 18,
     fontFamily: "Inter_700Bold",
+    fontVariant: ["tabular-nums"],
   },
   sectionTitle: {
     fontSize: 10,
@@ -528,7 +465,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   forecastRow: {
-    borderRadius: 20,
+    borderRadius: RADII.lg,
     padding: 16,
     marginBottom: 8,
     borderWidth: 1,
@@ -547,7 +484,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    borderRadius: 9999,
+    borderRadius: RADII.pill,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
@@ -572,7 +509,8 @@ const styles = StyleSheet.create({
   },
   forecastValue: {
     fontSize: 14,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
+    fontVariant: ["tabular-nums"],
   },
   noIncome: {
     alignItems: "center",

@@ -1,18 +1,30 @@
 import React from "react";
 import { type DimensionValue, StyleSheet, Text, View } from "react-native";
 
+import { RADII } from "@/constants/colors";
 import { useColors } from "@/hooks/useColors";
+import type { Bill } from "@/types/bill";
 import type { Debt } from "@/types/debt";
 import { MONTHS } from "@/types/debt";
-import { formatCurrency, groupTotalsByCurrency, isDebtActiveInMonth } from "@/utils/calculations";
+import {
+  combineTotals,
+  formatCurrency,
+  groupBillTotalsByCurrency,
+  groupTotalsByCurrency,
+  isDebtActiveInMonth,
+} from "@/utils/calculations";
 
 interface Props {
   debts: Debt[];
+  bills: Bill[];
 }
 
-export function MonthOutlook({ debts }: Props) {
+export function MonthOutlook({ debts, bills }: Props) {
   const colors = useColors();
   const now = new Date();
+
+  const billTotals = groupBillTotalsByCurrency(bills);
+  const billRaw = bills.reduce((s, b) => s + b.amount, 0);
 
   const monthData = Array.from({ length: 6 }, (_, i) => {
     let m = now.getMonth() + i;
@@ -24,13 +36,14 @@ export function MonthOutlook({ debts }: Props) {
     const activeDebts = debts.filter((d) =>
       isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, m, y),
     );
-    const totals = groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment);
-    const rawTotal = activeDebts.reduce((s, d) => s + d.monthlyPayment, 0);
+    const debtTotals = groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment);
+    const totals = combineTotals(debtTotals, billTotals);
+    const rawTotal =
+      activeDebts.reduce((s, d) => s + d.monthlyPayment, 0) + billRaw;
     return { month: MONTHS[m], totals, rawTotal };
   });
 
-  const maxTotal =
-    Math.max(...monthData.map((d) => d.rawTotal), 1);
+  const maxTotal = Math.max(...monthData.map((d) => d.rawTotal), 1);
 
   return (
     <View style={styles.container}>
@@ -39,14 +52,10 @@ export function MonthOutlook({ debts }: Props) {
       </Text>
       {monthData.map((item, i) => (
         <View key={i} style={styles.row}>
-          <Text
-            style={[styles.monthLabel, { color: colors.mutedForeground }]}
-          >
+          <Text style={[styles.monthLabel, { color: colors.mutedForeground }]}>
             {item.month}
           </Text>
-          <View
-            style={[styles.barBg, { backgroundColor: colors.card }]}
-          >
+          <View style={[styles.barBg, { backgroundColor: colors.muted }]}>
             <View
               style={[
                 styles.barFill,
@@ -61,14 +70,15 @@ export function MonthOutlook({ debts }: Props) {
             style={[
               styles.amount,
               {
-                color: item.rawTotal > 0
-                  ? colors.foreground
-                  : colors.mutedForeground,
+                color:
+                  item.rawTotal > 0 ? colors.foreground : colors.mutedForeground,
               },
             ]}
           >
             {item.totals.length > 0
-              ? item.totals.map((t) => formatCurrency(t.total, t.currency)).join("\n")
+              ? item.totals
+                  .map((t) => formatCurrency(t.total, t.currency))
+                  .join("\n")
               : "--"}
           </Text>
         </View>
@@ -102,16 +112,17 @@ const styles = StyleSheet.create({
   barBg: {
     flex: 1,
     height: 6,
-    borderRadius: 3,
+    borderRadius: RADII.sm,
   },
   barFill: {
     height: "100%",
-    borderRadius: 3,
+    borderRadius: RADII.sm,
   },
   amount: {
     width: 90,
     fontSize: 12,
     textAlign: "right",
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
+    fontVariant: ["tabular-nums"],
   },
 });

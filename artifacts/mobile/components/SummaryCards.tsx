@@ -1,65 +1,54 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+import { RADII } from "@/constants/colors";
 import { useColors } from "@/hooks/useColors";
 import type { CurrencyTotal } from "@/utils/calculations";
 import { formatCurrency, formatCurrencyTotals } from "@/utils/calculations";
 
-interface Props {
-  monthlyTotals: CurrencyTotal[];
-  remainingTotals: CurrencyTotal[];
-  activeCount: number;
+export interface SummaryItem {
+  label: string;
+  totals: CurrencyTotal[];
+  accent: string;
 }
 
-export function SummaryCards({
-  monthlyTotals,
-  remainingTotals,
-  activeCount,
-}: Props) {
+interface Props {
+  items: SummaryItem[];
+}
+
+export function SummaryCards({ items }: Props) {
   const colors = useColors();
-
-  const monthlyFormatted = formatCurrencyTotals(monthlyTotals);
-  const monthlyDisplay = monthlyFormatted || formatCurrency(0);
-  const remainingFormatted = formatCurrencyTotals(remainingTotals);
-  const remainingDisplay = remainingFormatted || formatCurrency(0);
-
-  const items = [
-    {
-      label: "Due This Month",
-      value: monthlyDisplay,
-      accent: colors.primary,
-    },
-    {
-      label: "Total Remaining",
-      value: remainingDisplay,
-      accent: colors.destructive,
-    },
-    {
-      label: "Active Debts",
-      value: String(activeCount),
-      accent: colors.accent,
-    },
-  ];
 
   return (
     <View style={styles.row}>
-      {items.map((item) => (
-        <View
-          key={item.label}
-          style={[styles.card, { backgroundColor: colors.card }]}
-        >
-          <Text style={[styles.label, { color: colors.mutedForeground }]}>
-            {item.label}
-          </Text>
-          <Text
-            style={[styles.value, { color: item.accent }]}
-            numberOfLines={2}
-            adjustsFontSizeToFit
+      {items.map((item) => {
+        const formatted = formatCurrencyTotals(item.totals) || formatCurrency(0);
+        return (
+          <View
+            key={item.label}
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                ...colors.cardShadow,
+              },
+            ]}
           >
-            {item.value}
-          </Text>
-        </View>
-      ))}
+            <View style={[styles.accentBar, { backgroundColor: item.accent }]} />
+            <Text style={[styles.label, { color: colors.mutedForeground }]}>
+              {item.label}
+            </Text>
+            <Text
+              style={[styles.value, { color: colors.foreground }]}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+            >
+              {formatted}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -72,8 +61,17 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: RADII.lg,
+    borderWidth: 1,
     padding: 14,
+    overflow: "hidden",
+  },
+  accentBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
   },
   label: {
     fontSize: 9,
@@ -83,7 +81,9 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   value: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
+    fontSize: 17,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: -0.3,
+    fontVariant: ["tabular-nums"],
   },
 });

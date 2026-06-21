@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { RADII } from "@/constants/colors";
 import { CURRENCIES, type CurrencyInfo, getCurrencyInfo } from "@/constants/currencies";
 import { useColors } from "@/hooks/useColors";
 
@@ -157,7 +158,7 @@ export function CurrencyPicker({ selected, onSelect, label }: Props) {
             onChangeText={setSearch}
             placeholder="Search currencies..."
             placeholderTextColor={colors.mutedForeground}
-            keyboardAppearance="dark"
+            keyboardAppearance={colors.scheme}
             autoCorrect={false}
           />
 
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    borderRadius: 12,
+    borderRadius: RADII.md,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   closeBtn: {
-    borderRadius: 9999,
+    borderRadius: RADII.pill,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   searchInput: {
-    borderRadius: 12,
+    borderRadius: RADII.md,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    borderRadius: 12,
+    borderRadius: RADII.md,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 14,

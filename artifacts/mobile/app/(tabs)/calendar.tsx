@@ -15,16 +15,23 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CalendarGrid } from "@/components/CalendarGrid";
+import { RADII } from "@/constants/colors";
 import { useDebts } from "@/context/DebtContext";
 import { useColors } from "@/hooks/useColors";
+import type { Bill } from "@/types/bill";
+import { getCategoryColor } from "@/types/bill";
 import type { Debt } from "@/types/debt";
 import { MONTHS } from "@/types/debt";
-import { formatCurrency, isDebtActiveInMonth } from "@/utils/calculations";
+import {
+  effectiveDayInMonth,
+  formatCurrency,
+  isDebtActiveInMonth,
+} from "@/utils/calculations";
 
 export default function CalendarScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { debts } = useDebts();
+  const { debts, bills } = useDebts();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
@@ -48,7 +55,10 @@ export default function CalendarScreen() {
   };
 
   useEffect(() => {
-    if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+    if (
+      Platform.OS === "android" &&
+      UIManager.setLayoutAnimationEnabledExperimental
+    ) {
       UIManager.setLayoutAnimationEnabledExperimental(true);
     }
   }, []);
@@ -67,6 +77,15 @@ export default function CalendarScreen() {
     );
   }, [debts, selectedDay, month, year]);
 
+  const dayBills: Bill[] = useMemo(() => {
+    if (selectedDay === null) return [];
+    return bills.filter(
+      (b) => effectiveDayInMonth(b.dayOfMonth, year, month) === selectedDay,
+    );
+  }, [bills, selectedDay, month, year]);
+
+  const dueCount = dayDebts.length + dayBills.length;
+
   const handleAddDebtOnDay = () => {
     if (selectedDay === null) return;
     router.push({
@@ -79,66 +98,58 @@ export default function CalendarScreen() {
     });
   };
 
-  const dateLabel = selectedDay !== null
-    ? `${MONTHS[month]} ${selectedDay}, ${year}`
-    : "";
+  const handleAddBillOnDay = () => {
+    if (selectedDay === null) return;
+    router.push({
+      pathname: "/add-bill",
+      params: { prefillDay: String(selectedDay) },
+    });
+  };
+
+  const dateLabel =
+    selectedDay !== null ? `${MONTHS[month]} ${selectedDay}, ${year}` : "";
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         contentContainerStyle={[
           styles.content,
           {
-            paddingTop:
-              Platform.OS === "web" ? 67 + 16 : insets.top + 16,
-            paddingBottom:
-              Platform.OS === "web" ? 34 + 80 : insets.bottom + 90,
+            paddingTop: Platform.OS === "web" ? 67 + 16 : insets.top + 16,
+            paddingBottom: Platform.OS === "web" ? 34 + 80 : insets.bottom + 90,
           },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: colors.foreground }]}>
-          Calendar
-        </Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>Calendar</Text>
 
         <View style={styles.nav}>
           <Pressable
             onPress={() => navMonth(-1)}
             style={[
               styles.navBtn,
-              { backgroundColor: colors.card },
+              { backgroundColor: colors.card, borderColor: colors.border },
             ]}
           >
-            <Feather
-              name="chevron-left"
-              size={20}
-              color={colors.foreground}
-            />
+            <Feather name="chevron-left" size={20} color={colors.foreground} />
           </Pressable>
-          <Text
-            style={[styles.monthTitle, { color: colors.foreground }]}
-          >
+          <Text style={[styles.monthTitle, { color: colors.foreground }]}>
             {MONTHS[month]} {year}
           </Text>
           <Pressable
             onPress={() => navMonth(1)}
             style={[
               styles.navBtn,
-              { backgroundColor: colors.card },
+              { backgroundColor: colors.card, borderColor: colors.border },
             ]}
           >
-            <Feather
-              name="chevron-right"
-              size={20}
-              color={colors.foreground}
-            />
+            <Feather name="chevron-right" size={20} color={colors.foreground} />
           </Pressable>
         </View>
 
         <CalendarGrid
           debts={debts}
+          bills={bills}
           year={year}
           month={month}
           selectedDay={selectedDay}
@@ -147,21 +158,34 @@ export default function CalendarScreen() {
         />
 
         {selectedDay !== null && (
-          <View style={[styles.dayPanel, { backgroundColor: colors.card }]}>
+          <View
+            style={[
+              styles.dayPanel,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                ...colors.cardShadow,
+              },
+            ]}
+          >
             <View style={styles.dayPanelHeader}>
               <View>
                 <Text style={[styles.dayPanelDate, { color: colors.foreground }]}>
                   {dateLabel}
                 </Text>
-                <Text style={[styles.dayPanelSub, { color: colors.mutedForeground }]}>
-                  {dayDebts.length === 0
-                    ? "No debts due"
-                    : `${dayDebts.length} debt${dayDebts.length > 1 ? "s" : ""} due`}
+                <Text
+                  style={[styles.dayPanelSub, { color: colors.mutedForeground }]}
+                >
+                  {dueCount === 0
+                    ? "Nothing due"
+                    : `${dueCount} item${dueCount > 1 ? "s" : ""} due`}
                 </Text>
               </View>
               <Pressable
                 onPress={() => {
-                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  LayoutAnimation.configureNext(
+                    LayoutAnimation.Presets.easeInEaseOut,
+                  );
                   setSelectedDay(null);
                 }}
                 hitSlop={8}
@@ -170,43 +194,107 @@ export default function CalendarScreen() {
               </Pressable>
             </View>
 
-            {dayDebts.length > 0 && (
-              <View style={styles.dayDebtList}>
+            {dueCount > 0 && (
+              <View style={styles.dayList}>
                 {dayDebts.map((d) => (
                   <Pressable
                     key={d.id}
-                    style={[styles.dayDebtRow, { borderColor: colors.border }]}
-                    onPress={() => {
-                      router.push({ pathname: "/add-debt", params: { editId: d.id } });
-                    }}
+                    style={[styles.dayRow, { borderColor: colors.border }]}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/add-debt",
+                        params: { editId: d.id },
+                      })
+                    }
                   >
-                    <View style={[styles.dayDebtDot, { backgroundColor: d.color }]} />
-                    <View style={styles.dayDebtInfo}>
-                      <Text style={[styles.dayDebtName, { color: colors.foreground }]}>
+                    <View style={[styles.dayDot, { backgroundColor: d.color }]} />
+                    <View style={styles.dayInfo}>
+                      <Text style={[styles.dayName, { color: colors.foreground }]}>
                         {d.name}
                       </Text>
-                      <Text style={[styles.dayDebtType, { color: colors.mutedForeground }]}>
+                      <Text
+                        style={[styles.dayType, { color: colors.mutedForeground }]}
+                      >
                         {d.type === "loan" ? `${d.annualRate}% APR` : "BNPL"}
                       </Text>
                     </View>
-                    <Text style={[styles.dayDebtAmount, { color: d.color }]}>
+                    <Text style={[styles.dayAmount, { color: colors.foreground }]}>
                       {formatCurrency(d.monthlyPayment, d.currency || "USD")}
                     </Text>
-                    <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
+                    <Feather
+                      name="chevron-right"
+                      size={14}
+                      color={colors.mutedForeground}
+                    />
+                  </Pressable>
+                ))}
+                {dayBills.map((b) => (
+                  <Pressable
+                    key={b.id}
+                    style={[styles.dayRow, { borderColor: colors.border }]}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/add-bill",
+                        params: { editId: b.id },
+                      })
+                    }
+                  >
+                    <View
+                      style={[
+                        styles.dayDot,
+                        { backgroundColor: getCategoryColor(b.category) },
+                      ]}
+                    />
+                    <View style={styles.dayInfo}>
+                      <Text style={[styles.dayName, { color: colors.foreground }]}>
+                        {b.name}
+                      </Text>
+                      <Text
+                        style={[styles.dayType, { color: colors.mutedForeground }]}
+                      >
+                        {b.category} · Bill
+                      </Text>
+                    </View>
+                    <Text style={[styles.dayAmount, { color: colors.foreground }]}>
+                      {formatCurrency(b.amount, b.currency)}
+                    </Text>
+                    <Feather
+                      name="chevron-right"
+                      size={14}
+                      color={colors.mutedForeground}
+                    />
                   </Pressable>
                 ))}
               </View>
             )}
 
-            <Pressable
-              onPress={handleAddDebtOnDay}
-              style={[styles.addDebtBtn, { backgroundColor: colors.primary }]}
-            >
-              <Feather name="plus" size={16} color="#fff" />
-              <Text style={styles.addDebtBtnText}>
-                Add Debt on {MONTHS[month]} {selectedDay}
-              </Text>
-            </Pressable>
+            <View style={styles.addRow}>
+              <Pressable
+                onPress={handleAddDebtOnDay}
+                style={[
+                  styles.addBtn,
+                  { backgroundColor: colors.secondary, borderColor: colors.border },
+                ]}
+              >
+                <Feather name="plus" size={15} color={colors.secondaryForeground} />
+                <Text
+                  style={[styles.addBtnText, { color: colors.secondaryForeground }]}
+                >
+                  Debt
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={handleAddBillOnDay}
+                style={[styles.addBtn, { backgroundColor: colors.primary }]}
+              >
+                <Feather name="plus" size={15} color={colors.primaryForeground} />
+                <Text
+                  style={[styles.addBtnText, { color: colors.primaryForeground }]}
+                >
+                  Bill
+                </Text>
+              </Pressable>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -215,12 +303,8 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 16,
-  },
+  container: { flex: 1 },
+  content: { paddingHorizontal: 16 },
   title: {
     fontSize: 24,
     fontFamily: "Inter_700Bold",
@@ -234,7 +318,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   navBtn: {
-    borderRadius: 9999,
+    borderRadius: RADII.md,
+    borderWidth: 1,
     padding: 10,
   },
   monthTitle: {
@@ -242,7 +327,8 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   dayPanel: {
-    borderRadius: 16,
+    borderRadius: RADII.lg,
+    borderWidth: 1,
     padding: 16,
     marginTop: 16,
   },
@@ -262,50 +348,56 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     marginTop: 2,
   },
-  dayDebtList: {
+  dayList: {
     gap: 8,
     marginBottom: 14,
   },
-  dayDebtRow: {
+  dayRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     borderBottomWidth: 1,
     paddingBottom: 10,
   },
-  dayDebtDot: {
+  dayDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
   },
-  dayDebtInfo: {
+  dayInfo: {
     flex: 1,
   },
-  dayDebtName: {
+  dayName: {
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
   },
-  dayDebtType: {
+  dayType: {
     fontSize: 11,
     fontFamily: "Inter_400Regular",
     marginTop: 1,
   },
-  dayDebtAmount: {
+  dayAmount: {
     fontSize: 14,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
     marginRight: 4,
+    fontVariant: ["tabular-nums"],
   },
-  addDebtBtn: {
+  addRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  addBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    borderRadius: 12,
-    paddingVertical: 14,
+    gap: 6,
+    borderRadius: RADII.md,
+    borderWidth: 1,
+    paddingVertical: 13,
   },
-  addDebtBtnText: {
-    color: "#fff",
-    fontSize: 14,
+  addBtnText: {
+    fontSize: 13,
     fontFamily: "Inter_600SemiBold",
   },
 });

@@ -1,6 +1,6 @@
 kind = "mobile"
 previewPath = "/mobile/"
-title = "Debt Calendar"
+title = "Debt Planner Plus"
 version = "1.0.0"
 id = "artifacts/mobile"
 router = "expo-domain"

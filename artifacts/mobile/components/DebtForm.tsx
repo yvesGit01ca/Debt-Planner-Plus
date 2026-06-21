@@ -12,6 +12,7 @@ import {
 } from "react-native";
 
 import { CurrencyPicker } from "@/components/CurrencyPicker";
+import { RADII } from "@/constants/colors";
 import { DEFAULT_CURRENCY, getCurrencySymbol } from "@/constants/currencies";
 import { useDebts } from "@/context/DebtContext";
 import { useColors } from "@/hooks/useColors";
@@ -257,7 +258,7 @@ export function DebtForm({ initial, prefill, onSave, onCancel }: Props) {
         placeholder={opts?.placeholder}
         placeholderTextColor={colors.mutedForeground}
         keyboardType={opts?.keyboard ?? "default"}
-        keyboardAppearance="dark"
+        keyboardAppearance={colors.scheme}
       />
       {submitted && opts?.errorKey && errors[opts.errorKey] && (
         <Text style={[styles.errorText, { color: colors.destructive }]}>
@@ -434,13 +435,17 @@ export function DebtForm({ initial, prefill, onSave, onCancel }: Props) {
           onPress={onCancel}
           style={[
             styles.cancelBtn,
-            { backgroundColor: colors.surface },
+            {
+              backgroundColor: colors.secondary,
+              borderWidth: 1,
+              borderColor: colors.border,
+            },
           ]}
         >
           <Text
             style={[
               styles.cancelText,
-              { color: colors.background },
+              { color: colors.secondaryForeground },
             ]}
           >
             Cancel
@@ -491,7 +496,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   input: {
-    borderRadius: 12,
+    borderRadius: RADII.md,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === "ios" ? 12 : 10,
@@ -511,7 +516,7 @@ const styles = StyleSheet.create({
   typeBtn: {
     flex: 1,
     alignItems: "center",
-    borderRadius: 9999,
+    borderRadius: RADII.pill,
     borderWidth: 1,
     paddingVertical: 14,
   },
@@ -527,7 +532,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   monthBtn: {
-    borderRadius: 9999,
+    borderRadius: RADII.pill,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -537,7 +542,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   estimate: {
-    borderRadius: 20,
+    borderRadius: RADII.lg,
     padding: 16,
     marginBottom: 24,
   },
@@ -562,7 +567,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 9999,
+    borderRadius: RADII.md,
     paddingVertical: 14,
     paddingHorizontal: 32,
   },
@@ -576,7 +581,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    borderRadius: 9999,
+    borderRadius: RADII.md,
     paddingVertical: 14,
     paddingHorizontal: 32,
   },

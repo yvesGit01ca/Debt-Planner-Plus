@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "LEDGER",
+    "name": "Debt Planner Plus",
     "slug": "ledger",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "ledger",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/icon.png",

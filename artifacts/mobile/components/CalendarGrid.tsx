@@ -2,12 +2,23 @@ import * as Haptics from "expo-haptics";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { RADII } from "@/constants/colors";
 import { useColors } from "@/hooks/useColors";
+import type { Bill } from "@/types/bill";
+import { getCategoryColor } from "@/types/bill";
 import type { Debt } from "@/types/debt";
-import { formatCurrency, groupTotalsByCurrency, isDebtActiveInMonth } from "@/utils/calculations";
+import {
+  combineTotals,
+  effectiveDayInMonth,
+  formatCurrency,
+  groupBillTotalsByCurrency,
+  groupTotalsByCurrency,
+  isDebtActiveInMonth,
+} from "@/utils/calculations";
 
 interface Props {
   debts: Debt[];
+  bills: Bill[];
   year: number;
   month: number;
   selectedDay?: number | null;
@@ -17,7 +28,15 @@ interface Props {
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay, hideSummary }: Props) {
+export function CalendarGrid({
+  debts,
+  bills,
+  year,
+  month,
+  selectedDay,
+  onSelectDay,
+  hideSummary,
+}: Props) {
   const colors = useColors();
   const days = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
@@ -31,13 +50,25 @@ export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay, hid
   const isCurrentMonth =
     month === now.getMonth() && year === now.getFullYear();
 
-  const debtsOnDay = (day: number | null): Debt[] => {
+  const dotsOnDay = (day: number | null): string[] => {
     if (!day) return [];
-    return debts.filter(
-      (d) =>
-        d.dueDay === day &&
-        isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, month, year),
-    );
+    const debtDots = debts
+      .filter(
+        (d) =>
+          d.dueDay === day &&
+          isDebtActiveInMonth(
+            d.startMonth,
+            d.startYear,
+            d.totalMonths,
+            month,
+            year,
+          ),
+      )
+      .map((d) => d.color);
+    const billDots = bills
+      .filter((b) => effectiveDayInMonth(b.dayOfMonth, year, month) === day)
+      .map((b) => getCategoryColor(b.category));
+    return [...debtDots, ...billDots];
   };
 
   const handleDayPress = (day: number) => {
@@ -50,12 +81,7 @@ export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay, hid
       <View style={styles.weekdayRow}>
         {WEEKDAYS.map((d) => (
           <View key={d} style={styles.weekdayCell}>
-            <Text
-              style={[
-                styles.weekdayText,
-                { color: colors.mutedForeground },
-              ]}
-            >
+            <Text style={[styles.weekdayText, { color: colors.mutedForeground }]}>
               {d}
             </Text>
           </View>
@@ -63,27 +89,26 @@ export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay, hid
       </View>
       <View style={styles.grid}>
         {cells.map((day, i) => {
-          const hits = debtsOnDay(day);
+          const dots = dotsOnDay(day);
           const isToday = isCurrentMonth && day === now.getDate();
           const isSelected = day !== null && day === selectedDay;
 
           const bgColor = day
             ? isSelected
-              ? "rgba(73,79,223,0.18)"
+              ? colors.primarySoft
               : isToday
-                ? "rgba(73,79,223,0.12)"
+                ? colors.primarySoft
                 : colors.card
             : "transparent";
 
           const borderCol = isSelected
             ? colors.primary
             : isToday
-              ? "rgba(73,79,223,0.4)"
-              : "transparent";
+              ? colors.primary + "66"
+              : colors.border;
 
-          const dayColor = isSelected || isToday
-            ? colors.primary
-            : colors.mutedForeground;
+          const dayColor =
+            isSelected || isToday ? colors.primary : colors.foreground;
 
           const cellContent = (
             <>
@@ -93,19 +118,21 @@ export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay, hid
                     styles.dayText,
                     {
                       color: dayColor,
-                      fontFamily: isSelected ? "Inter_700Bold" : "Inter_500Medium",
+                      fontFamily: isSelected
+                        ? "Inter_700Bold"
+                        : "Inter_500Medium",
                     },
                   ]}
                 >
                   {day}
                 </Text>
               )}
-              {hits.length > 0 && (
+              {dots.length > 0 && (
                 <View style={styles.dotRow}>
-                  {hits.map((d) => (
+                  {dots.slice(0, 4).map((color, idx) => (
                     <View
-                      key={d.id}
-                      style={[styles.debtDot, { backgroundColor: d.color }]}
+                      key={idx}
+                      style={[styles.debtDot, { backgroundColor: color }]}
                     />
                   ))}
                 </View>
@@ -150,30 +177,35 @@ export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay, hid
                 key={d.id}
                 style={[
                   styles.legendItem,
-                  { backgroundColor: colors.card },
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+              >
+                <View style={[styles.legendDot, { backgroundColor: d.color }]} />
+                <Text
+                  style={[styles.legendName, { color: colors.mutedForeground }]}
+                >
+                  {d.name}
+                </Text>
+              </View>
+            ))}
+            {bills.map((b) => (
+              <View
+                key={b.id}
+                style={[
+                  styles.legendItem,
+                  { backgroundColor: colors.card, borderColor: colors.border },
                 ]}
               >
                 <View
                   style={[
                     styles.legendDot,
-                    { backgroundColor: d.color },
+                    { backgroundColor: getCategoryColor(b.category) },
                   ]}
                 />
                 <Text
-                  style={[
-                    styles.legendName,
-                    { color: colors.mutedForeground },
-                  ]}
+                  style={[styles.legendName, { color: colors.mutedForeground }]}
                 >
-                  {d.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.legendAmount,
-                    { color: d.color },
-                  ]}
-                >
-                  {formatCurrency(d.monthlyPayment, d.currency || "USD")}
+                  {b.name}
                 </Text>
               </View>
             ))}
@@ -181,28 +213,48 @@ export function CalendarGrid({ debts, year, month, selectedDay, onSelectDay, hid
 
           {(() => {
             const activeDebts = debts.filter((d) =>
-              isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, month, year),
+              isDebtActiveInMonth(
+                d.startMonth,
+                d.startYear,
+                d.totalMonths,
+                month,
+                year,
+              ),
             );
-            const totals = groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment);
+            const totals = combineTotals(
+              groupTotalsByCurrency(activeDebts, (d) => d.monthlyPayment),
+              groupBillTotalsByCurrency(bills),
+            );
             return (
               <View
-                style={[styles.totalBar, { backgroundColor: colors.card }]}
+                style={[
+                  styles.totalBar,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    ...colors.cardShadow,
+                  },
+                ]}
               >
                 <Text
-                  style={[
-                    styles.totalLabel,
-                    { color: colors.mutedForeground },
-                  ]}
+                  style={[styles.totalLabel, { color: colors.mutedForeground }]}
                 >
                   Total due this month
                 </Text>
                 <View style={styles.totalValues}>
-                  {totals.length > 0 ? totals.map((t) => (
-                    <Text key={t.currency} style={[styles.totalValue, { color: colors.primary }]}>
-                      {formatCurrency(t.total, t.currency)}
-                    </Text>
-                  )) : (
-                    <Text style={[styles.totalValue, { color: colors.primary }]}>
+                  {totals.length > 0 ? (
+                    totals.map((t) => (
+                      <Text
+                        key={t.currency}
+                        style={[styles.totalValue, { color: colors.foreground }]}
+                      >
+                        {formatCurrency(t.total, t.currency)}
+                      </Text>
+                    ))
+                  ) : (
+                    <Text
+                      style={[styles.totalValue, { color: colors.foreground }]}
+                    >
                       {formatCurrency(0)}
                     </Text>
                   )}
@@ -239,21 +291,23 @@ const styles = StyleSheet.create({
   cell: {
     width: "14.28%",
     minHeight: 52,
-    borderRadius: 8,
+    borderRadius: RADII.md,
     padding: 4,
-    borderWidth: 1.5,
+    borderWidth: 1,
     alignItems: "center",
   },
   dayText: {
     fontSize: 11,
     marginBottom: 2,
     fontFamily: "Inter_500Medium",
+    fontVariant: ["tabular-nums"],
   },
   dotRow: {
     flexDirection: "row",
     gap: 2,
     marginTop: 2,
     justifyContent: "center",
+    flexWrap: "wrap",
   },
   debtDot: {
     width: 5,
@@ -270,7 +324,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    borderRadius: 9999,
+    borderRadius: RADII.pill,
+    borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
@@ -284,15 +339,12 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     letterSpacing: 0.24,
   },
-  legendAmount: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
-  },
   totalBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderRadius: 20,
+    borderRadius: RADII.lg,
+    borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginTop: 16,
@@ -308,6 +360,7 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     fontSize: 18,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
+    fontVariant: ["tabular-nums"],
   },
 });

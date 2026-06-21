@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import { PayoffSimulator } from "@/components/PayoffSimulator";
+import { RADII } from "@/constants/colors";
 import { useDebts } from "@/context/DebtContext";
 import { useColors } from "@/hooks/useColors";
 import type { Debt } from "@/types/debt";
@@ -69,6 +70,7 @@ export function DebtCard({ debt, onEdit }: Props) {
         {
           backgroundColor: colors.card,
           borderColor: expanded ? debt.color + "55" : colors.border,
+          ...colors.cardShadow,
         },
       ]}
     >
@@ -175,18 +177,22 @@ export function DebtCard({ debt, onEdit }: Props) {
               onPress={() => onEdit(debt)}
               style={[
                 styles.actionBtn,
-                { backgroundColor: colors.surface },
+                {
+                  backgroundColor: colors.secondary,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                },
               ]}
             >
               <Feather
                 name="edit-2"
                 size={14}
-                color={colors.background}
+                color={colors.secondaryForeground}
               />
               <Text
                 style={[
                   styles.actionText,
-                  { color: colors.background },
+                  { color: colors.secondaryForeground },
                 ]}
               >
                 Edit
@@ -210,7 +216,7 @@ export function DebtCard({ debt, onEdit }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
+    borderRadius: RADII.lg,
     padding: 16,
     marginBottom: 8,
     borderWidth: 1,
@@ -308,7 +314,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    borderRadius: 9999,
+    borderRadius: RADII.md,
     paddingVertical: 14,
     paddingHorizontal: 32,
   },

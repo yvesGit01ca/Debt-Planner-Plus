@@ -1,0 +1,1 @@
+- [Expo dual tab layouts](expo-dual-tab-layouts.md) — adding a tab requires editing BOTH NativeTabs and Classic Tabs in (tabs)/_layout.tsx, or some platforms silently lose it.
