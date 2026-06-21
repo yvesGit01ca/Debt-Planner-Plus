@@ -95,6 +95,7 @@ export default function AddDebtScreen() {
           {editingDebt ? "Edit Debt" : "New Debt"}
         </Text>
         <DebtForm
+          key={editingDebt?.id ?? "new"}
           initial={editingDebt}
           prefill={prefill}
           onSave={handleSave}

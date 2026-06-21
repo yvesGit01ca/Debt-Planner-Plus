@@ -75,6 +75,7 @@ export default function AddBillScreen() {
           {editingBill ? "Edit Bill" : "New Bill"}
         </Text>
         <BillForm
+          key={editingBill?.id ?? "new"}
           initial={editingBill}
           prefill={prefill}
           onSave={handleSave}

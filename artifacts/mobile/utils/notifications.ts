@@ -42,11 +42,20 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return requested.granted;
 }
 
+// Item identity carried in each scheduled notification so a tap can deep-link to
+// the matching debt/bill screen. Kept minimal and serializable.
+export interface ReminderData {
+  itemId: string;
+  itemType: "debt" | "bill";
+}
+
 interface Reminder {
   title: string;
   amount: number;
   currency: string;
   triggerDate: Date;
+  itemId: string;
+  itemType: "debt" | "bill";
 }
 
 // Finds the next upcoming due-day occurrence whose reminder (due − lead) is still
@@ -135,6 +144,8 @@ async function runSchedule(
         amount: d.monthlyPayment,
         currency: d.currency,
         triggerDate: trigger,
+        itemId: d.id,
+        itemType: "debt",
       });
     }
   }
@@ -148,6 +159,8 @@ async function runSchedule(
         amount: b.amount,
         currency: b.currency,
         triggerDate: trigger,
+        itemId: b.id,
+        itemType: "bill",
       });
     }
   }
@@ -162,6 +175,7 @@ async function runSchedule(
         title: r.title,
         body: `${formatCurrency(r.amount, r.currency)} is due ${whenText}`,
         sound: true,
+        data: { itemId: r.itemId, itemType: r.itemType } satisfies ReminderData,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -174,4 +188,22 @@ async function runSchedule(
 export async function cancelAllReminders(): Promise<void> {
   if (Platform.OS === "web") return;
   await Notifications.cancelAllScheduledNotificationsAsync();
+}
+
+// Maps a notification's data payload to the edit screen for the matching debt or
+// bill. Returns null for payloads that lack a valid item id/type (e.g. legacy
+// reminders scheduled before deep-linking existed), so callers can ignore them.
+export function reminderRouteFromData(
+  data: unknown,
+): { pathname: "/add-debt" | "/add-bill"; params: { editId: string } } | null {
+  if (!data || typeof data !== "object") return null;
+  const { itemId, itemType } = data as Partial<ReminderData>;
+  if (typeof itemId !== "string" || itemId.length === 0) return null;
+  if (itemType === "debt") {
+    return { pathname: "/add-debt", params: { editId: itemId } };
+  }
+  if (itemType === "bill") {
+    return { pathname: "/add-bill", params: { editId: itemId } };
+  }
+  return null;
 }
