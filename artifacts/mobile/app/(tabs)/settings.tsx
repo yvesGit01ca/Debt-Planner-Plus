@@ -1,5 +1,7 @@
 import { Feather } from "@expo/vector-icons";
-import React, { useState } from "react";
+import * as Haptics from "expo-haptics";
+import { useFocusEffect } from "expo-router";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Alert,
   Platform,
@@ -35,6 +37,25 @@ export default function SettingsScreen() {
   const [revenue, setRevenue] = useState(
     String(profile.additionalRevenue || ""),
   );
+  // Only fields the user actually edited on this screen are eligible for
+  // auto-save, so we never overwrite newer values saved elsewhere (e.g. the
+  // Forecast income editor) with stale local state.
+  const [touched, setTouched] = useState(false);
+
+  const incomeDirty =
+    touched &&
+    (salary !== String(profile.monthlySalary || "") ||
+      revenue !== String(profile.additionalRevenue || ""));
+
+  const handleSalaryChange = (v: string) => {
+    setTouched(true);
+    setSalary(v);
+  };
+
+  const handleRevenueChange = (v: string) => {
+    setTouched(true);
+    setRevenue(v);
+  };
 
   const persistIncome = (nextSalary: string, nextRevenue: string) => {
     updateProfile({
@@ -43,6 +64,32 @@ export default function SettingsScreen() {
       additionalRevenue: parseFloat(nextRevenue) || 0,
     });
   };
+
+  const handleSaveIncome = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    persistIncome(salary, revenue);
+    setTouched(false);
+  };
+
+  // Auto-save any pending income edits when leaving this screen, so switching
+  // tabs never silently discards changes on platforms where TextInput onBlur
+  // doesn't fire. A ref keeps the latest values without re-running the effect.
+  const autosaveRef = useRef<() => void>(() => {});
+  autosaveRef.current = () => {
+    if (incomeDirty) persistIncome(salary, revenue);
+  };
+  useFocusEffect(
+    useCallback(() => {
+      // Re-sync inputs from the latest stored profile when entering the
+      // screen, discarding any stale local state from a previous visit.
+      setSalary(String(profile.monthlySalary || ""));
+      setRevenue(String(profile.additionalRevenue || ""));
+      setTouched(false);
+      return () => {
+        autosaveRef.current();
+      };
+    }, [profile.monthlySalary, profile.additionalRevenue]),
+  );
 
   const handleCurrencyChange = (code: string) => {
     updateProfile({ ...profile, defaultCurrency: code });
@@ -61,6 +108,7 @@ export default function SettingsScreen() {
             clearAllData();
             setSalary("");
             setRevenue("");
+            setTouched(false);
           },
         },
       ],
@@ -188,8 +236,7 @@ export default function SettingsScreen() {
                 },
               ]}
               value={salary}
-              onChangeText={setSalary}
-              onBlur={() => persistIncome(salary, revenue)}
+              onChangeText={handleSalaryChange}
               keyboardType="numeric"
               placeholder="0"
               placeholderTextColor={colors.mutedForeground}
@@ -210,14 +257,30 @@ export default function SettingsScreen() {
                 },
               ]}
               value={revenue}
-              onChangeText={setRevenue}
-              onBlur={() => persistIncome(salary, revenue)}
+              onChangeText={handleRevenueChange}
               keyboardType="numeric"
               placeholder="0"
               placeholderTextColor={colors.mutedForeground}
               keyboardAppearance={colors.scheme}
             />
           </View>
+          {incomeDirty && (
+            <View style={styles.saveRow}>
+              <Text style={[styles.unsavedHint, { color: colors.mutedForeground }]}>
+                Unsaved changes
+              </Text>
+              <Pressable
+                onPress={handleSaveIncome}
+                style={[styles.saveBtn, { backgroundColor: colors.primary }]}
+              >
+                <Text
+                  style={[styles.saveText, { color: colors.primaryForeground }]}
+                >
+                  Save
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         {/* Data */}
@@ -310,6 +373,25 @@ const styles = StyleSheet.create({
   },
   field: {
     marginBottom: 12,
+  },
+  saveRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  unsavedHint: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+  },
+  saveBtn: {
+    borderRadius: RADII.md,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  saveText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
   },
   input: {
     borderRadius: RADII.md,
