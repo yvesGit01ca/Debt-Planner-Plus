@@ -120,8 +120,15 @@ interface DebtContextType {
   updateBill: (bill: Bill) => void;
   deleteBill: (id: string) => void;
   updateProfile: (profile: FinancialProfile) => void;
+  clearAllData: () => void;
   isLoading: boolean;
 }
+
+const DEFAULT_PROFILE: FinancialProfile = {
+  monthlySalary: 0,
+  additionalRevenue: 0,
+  defaultCurrency: DEFAULT_CURRENCY,
+};
 
 const DebtContext = createContext<DebtContextType | null>(null);
 
@@ -189,11 +196,7 @@ function generateId(): string {
 export function DebtProvider({ children }: { children: React.ReactNode }) {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
-  const [profile, setProfile] = useState<FinancialProfile>({
-    monthlySalary: 0,
-    additionalRevenue: 0,
-    defaultCurrency: DEFAULT_CURRENCY,
-  });
+  const [profile, setProfile] = useState<FinancialProfile>(DEFAULT_PROFILE);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -325,6 +328,15 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
     secureSetItem(PROFILE_KEY, JSON.stringify(p)).catch(() => {});
   }, []);
 
+  const clearAllData = useCallback(() => {
+    setDebts([]);
+    setBills([]);
+    setProfile(DEFAULT_PROFILE);
+    persistDebts([]);
+    persistBills([]);
+    secureSetItem(PROFILE_KEY, JSON.stringify(DEFAULT_PROFILE)).catch(() => {});
+  }, [persistDebts, persistBills]);
+
   return (
     <DebtContext.Provider
       value={{
@@ -338,6 +350,7 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
         updateBill,
         deleteBill,
         updateProfile,
+        clearAllData,
         isLoading,
       }}
     >
