@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CurrencyPicker } from "@/components/CurrencyPicker";
+import { TimePicker } from "@/components/TimePicker";
 import { RADII } from "@/constants/colors";
 import { useDebts } from "@/context/DebtContext";
 import { useThemeMode, type ThemeMode } from "@/context/ThemeContext";
@@ -134,6 +135,21 @@ export default function SettingsScreen() {
     if (hours === profile.notificationLeadHours) return;
     Haptics.selectionAsync();
     updateProfile({ ...profile, notificationLeadHours: hours });
+  };
+
+  const handleTimeChange = (hour: number, minute: number) => {
+    if (
+      hour === profile.notificationHour &&
+      minute === profile.notificationMinute
+    ) {
+      return;
+    }
+    Haptics.selectionAsync();
+    updateProfile({
+      ...profile,
+      notificationHour: hour,
+      notificationMinute: minute,
+    });
   };
 
   const handleReset = () => {
@@ -324,6 +340,15 @@ export default function SettingsScreen() {
                   );
                 })}
               </View>
+
+              <View style={styles.timeBlock}>
+                <TimePicker
+                  hour={profile.notificationHour}
+                  minute={profile.notificationMinute}
+                  onChange={handleTimeChange}
+                  label="Time of day"
+                />
+              </View>
             </View>
           )}
         </View>
@@ -488,6 +513,9 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   leadBlock: {
+    marginTop: 16,
+  },
+  timeBlock: {
     marginTop: 16,
   },
   fieldLabel: {

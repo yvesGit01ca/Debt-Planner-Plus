@@ -112,7 +112,21 @@ function migrateProfile(profile: FinancialProfile): FinancialProfile {
     defaultCurrency: profile.defaultCurrency || DEFAULT_CURRENCY,
     notificationsEnabled: profile.notificationsEnabled ?? false,
     notificationLeadHours: profile.notificationLeadHours === 48 ? 48 : 24,
+    notificationHour: clampInt(profile.notificationHour, 0, 23, 9),
+    notificationMinute: clampInt(profile.notificationMinute, 0, 59, 0),
   };
+}
+
+// Coerces a possibly-missing/out-of-range stored value into a valid integer,
+// falling back to `fallback` when the value is absent or not a finite number.
+function clampInt(
+  value: number | undefined,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(value)));
 }
 
 interface DebtContextType {
@@ -136,6 +150,8 @@ const DEFAULT_PROFILE: FinancialProfile = {
   defaultCurrency: DEFAULT_CURRENCY,
   notificationsEnabled: false,
   notificationLeadHours: 24,
+  notificationHour: 9,
+  notificationMinute: 0,
 };
 
 const DebtContext = createContext<DebtContextType | null>(null);

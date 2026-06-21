@@ -6,10 +6,6 @@ import type { Debt, FinancialProfile } from "@/types/debt";
 
 import { effectiveDayInMonth, formatCurrency, isDebtActiveInMonth } from "./calculations";
 
-// Reminders fire at this hour on the trigger day; anchoring the due date to a
-// fixed morning hour keeps the "24h/48h before" lead time meaningful instead of
-// firing at midnight.
-const DUE_HOUR = 9;
 // iOS caps pending scheduled notifications around 64; stay safely under it.
 const MAX_SCHEDULED = 60;
 
@@ -59,6 +55,8 @@ function nextReminderTrigger(
   day: number,
   leadMs: number,
   now: Date,
+  hour: number,
+  minute: number,
   isActiveInMonth?: (month: number, year: number) => boolean,
 ): Date | null {
   for (let i = 0; i < 13; i++) {
@@ -70,7 +68,7 @@ function nextReminderTrigger(
     }
     if (isActiveInMonth && !isActiveInMonth(m, y)) continue;
     const effDay = effectiveDayInMonth(day, y, m);
-    const dueDate = new Date(y, m, effDay, DUE_HOUR, 0, 0, 0);
+    const dueDate = new Date(y, m, effDay, hour, minute, 0, 0);
     const trigger = new Date(dueDate.getTime() - leadMs);
     if (trigger.getTime() > now.getTime() + 1000) return trigger;
   }
@@ -116,12 +114,18 @@ async function runSchedule(
   const leadMs = leadHours * 3600 * 1000;
   const now = new Date();
   const whenText = leadHours >= 48 ? "in 2 days" : "tomorrow";
+  const hour = Number.isFinite(profile.notificationHour)
+    ? Math.min(23, Math.max(0, Math.round(profile.notificationHour)))
+    : 9;
+  const minute = Number.isFinite(profile.notificationMinute)
+    ? Math.min(59, Math.max(0, Math.round(profile.notificationMinute)))
+    : 0;
 
   const reminders: Reminder[] = [];
 
   for (const d of debts) {
     if (d.monthlyPayment <= 0) continue;
-    const trigger = nextReminderTrigger(d.dueDay, leadMs, now, (m, y) =>
+    const trigger = nextReminderTrigger(d.dueDay, leadMs, now, hour, minute, (m, y) =>
       isDebtActiveInMonth(d.startMonth, d.startYear, d.totalMonths, m, y),
     );
     if (trigger) {
@@ -136,7 +140,7 @@ async function runSchedule(
 
   for (const b of bills) {
     if (b.amount <= 0) continue;
-    const trigger = nextReminderTrigger(b.dayOfMonth, leadMs, now);
+    const trigger = nextReminderTrigger(b.dayOfMonth, leadMs, now, hour, minute);
     if (trigger) {
       reminders.push({
         title: b.name,

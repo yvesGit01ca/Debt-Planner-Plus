@@ -20,6 +20,8 @@ export interface FinancialProfile {
   defaultCurrency: string;
   notificationsEnabled: boolean;
   notificationLeadHours: number; // 24 or 48
+  notificationHour: number; // 0–23, local time the reminder fires
+  notificationMinute: number; // 0–59
 }
 
 export const DEBT_COLORS = [
