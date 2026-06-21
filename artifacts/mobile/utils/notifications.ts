@@ -51,7 +51,8 @@ interface Reminder {
 
 // Finds the next upcoming due-day occurrence whose reminder (due − lead) is still
 // in the future. For debts, `isActiveInMonth` restricts to the active term.
-function nextReminderTrigger(
+// Exported for unit testing; local notification delivery can't be exercised on web.
+export function nextReminderTrigger(
   day: number,
   leadMs: number,
   now: Date,
