@@ -12,6 +12,20 @@ export function formatCurrency(n: number, currencyCode: string = "USD"): string 
   }).format(n);
 }
 
+// Compact currency formatting (e.g. "€1.1K") for tight spaces like chart axes.
+export function formatCurrencyCompact(
+  n: number,
+  currencyCode: string = "USD",
+): string {
+  const info = getCurrencyInfo(currencyCode);
+  return new Intl.NumberFormat(info.locale, {
+    style: "currency",
+    currency: info.code,
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(n);
+}
+
 export function calcMonthlyPayment(
   principal: number,
   annualRate: number,
