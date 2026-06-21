@@ -25,7 +25,6 @@ import type { Debt } from "@/types/debt";
 import { MONTHS } from "@/types/debt";
 import {
   combineTotals,
-  effectiveDayInMonth,
   formatCurrency,
   getOrdinalSuffix,
   groupBillTotalsByCurrency,
@@ -92,12 +91,7 @@ export default function DashboardScreen() {
   );
 
   const monthBills = useMemo(
-    () =>
-      [...bills].sort(
-        (a, b) =>
-          effectiveDayInMonth(a.dayOfMonth, now.getFullYear(), now.getMonth()) -
-          effectiveDayInMonth(b.dayOfMonth, now.getFullYear(), now.getMonth()),
-      ),
+    () => [...bills].sort((a, b) => b.amount - a.amount),
     [bills],
   );
 
